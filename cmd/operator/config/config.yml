@@ -1,0 +1,5 @@
+ethereum:
+  node_url: "wss://sepolia.infura.io/ws/v3/ab366eff699040d6bde77d06ec99f925"
+
+ditto_entrypoint:
+  contract_address: "0x9201cFC00bB9fE0477b51560123660183bf2026A"

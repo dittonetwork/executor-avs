@@ -1,0 +1,23 @@
+name: Build Image
+
+on:
+  workflow_call:
+    inputs:
+      APP:
+        required: true
+        type: string
+        description: Application that is supposed to be built and used as the entrypoint for the image.
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build image
+        env:
+          APP: ${{ inputs.APP }}
+          CI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKER_BUILDKIT: 1
+        run: |
+          docker build --secret id=CI_GITHUB_TOKEN --build-arg APP=$APP .

@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/dittonetwork/executor-avs/pkg/labels"
 	"github.com/dittonetwork/executor-avs/pkg/log"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -130,10 +130,12 @@ func NewHTTPServer(addr string, shutdownTimeout time.Duration, router http.Handl
 		conns:  make(map[net.Conn]http.ConnState),
 		states: make(map[http.ConnState][]net.Conn),
 	}
+	//nolint:gosec // will be fixed later
+	// FIXME: enable ReadHeaderTimeout after https://github.com/golang/go/issues/54784 is resolved
 	srv := &http.Server{
-		Addr:              addr,
-		Handler:           mux,
-		ReadHeaderTimeout: 10 * time.Second,
+		Addr:    addr,
+		Handler: mux,
+		// ReadHeaderTimeout: 10 * time.Second,
 		ConnState: func(conn net.Conn, state http.ConnState) {
 			connCounter.WithLabelValues(state.String()).Inc()
 			states.setState(conn, state)

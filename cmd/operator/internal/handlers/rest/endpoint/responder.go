@@ -3,12 +3,14 @@ package endpoint
 import (
 	"context"
 	"errors"
+	"net/http"
+	"syscall"
+
+	"github.com/mailru/easyjson"
+
 	api "github.com/dittonetwork/executor-avs/api/operator"
 	"github.com/dittonetwork/executor-avs/pkg/encoding/json"
 	"github.com/dittonetwork/executor-avs/pkg/log"
-	"github.com/mailru/easyjson"
-	"net/http"
-	"syscall"
 )
 
 type responder struct {
@@ -23,13 +25,13 @@ func (r responder) RespondError(ctx context.Context, w http.ResponseWriter, err 
 
 		w.WriteHeader(http.StatusInternalServerError)
 
-		r.RespondEasyJson(ctx, w, api.ErrorMessageResponse{
+		r.RespondEasyJSON(ctx, w, api.ErrorMessageResponse{
 			Message: "internal server error",
 		})
 	}
 }
 
-func (r responder) RespondJson(ctx context.Context, w http.ResponseWriter, v interface{}) {
+func (r responder) RespondJSON(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(v)
 	if err != nil {
@@ -37,7 +39,7 @@ func (r responder) RespondJson(ctx context.Context, w http.ResponseWriter, v int
 	}
 }
 
-func (r responder) RespondEasyJson(ctx context.Context, w http.ResponseWriter, v easyjson.Marshaler) {
+func (r responder) RespondEasyJSON(ctx context.Context, w http.ResponseWriter, v easyjson.Marshaler) {
 	w.Header().Set("Content-Type", "application/json")
 	_, _, err := easyjson.MarshalToHTTPResponseWriter(v, w)
 	if err != nil {
@@ -46,11 +48,12 @@ func (r responder) RespondEasyJson(ctx context.Context, w http.ResponseWriter, v
 }
 
 func (r responder) logError(ctx context.Context, err error) {
-	if errors.Is(err, syscall.EPIPE) {
+	switch {
+	case errors.Is(err, syscall.EPIPE):
 		log.WithContext(ctx).With(log.Err(err)).Warn("broken pipe")
-	} else if errors.Is(err, syscall.ECONNRESET) {
+	case errors.Is(err, syscall.ECONNRESET):
 		log.WithContext(ctx).With(log.Err(err)).Warn("connection reset by peer")
-	} else {
+	default:
 		log.WithContext(ctx).With(log.Err(err)).Error("failed to encode json")
 	}
 }

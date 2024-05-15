@@ -1,9 +1,11 @@
 package endpoint
 
 import (
-	api "github.com/dittonetwork/executor-avs/api/operator"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
+
+	api "github.com/dittonetwork/executor-avs/api/operator"
 )
 
 type ServiceHealthEndpoint struct {

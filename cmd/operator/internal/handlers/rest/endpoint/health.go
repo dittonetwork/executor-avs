@@ -1,8 +1,9 @@
 package endpoint
 
 import (
-	"github.com/julienschmidt/httprouter"
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 type HealthCheckEndpoint struct {
