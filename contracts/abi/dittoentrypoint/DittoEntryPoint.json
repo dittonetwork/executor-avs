@@ -1,0 +1,373 @@
+[
+  {
+    "type": "function",
+    "name": "arrangeExecutors",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "canExecWorkflowCheck",
+    "inputs": [
+      {
+        "name": "vaultAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "workflowId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "gasPrice",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "cancelWorkflow",
+    "inputs": [
+      {
+        "name": "workflowId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "getActiveWorkflows",
+    "inputs": [
+      {
+        "name": "from",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "to",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "pageWorkflows",
+        "type": "tuple[]",
+        "internalType": "struct IDittoEntryPoint.Workflow[]",
+        "components": [
+          {
+            "name": "vaultAddress",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "workflowId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getAllActiveWorkflows",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple[]",
+        "internalType": "struct IDittoEntryPoint.Workflow[]",
+        "components": [
+          {
+            "name": "vaultAddress",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "workflowId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getAmountActiveWorkflows",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getAmountExecutors",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getSeedExternal",
+    "inputs": [
+      {
+        "name": "blockNumber",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "seed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_protocolFees",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "isExecutor",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "isValidExecutor",
+    "inputs": [
+      {
+        "name": "blockNumber",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "executorAddress",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "registerExecutor",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "registerWorkflow",
+    "inputs": [
+      {
+        "name": "workflowId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "runMultipleWorkflows",
+    "inputs": [
+      {
+        "name": "workflows",
+        "type": "tuple[]",
+        "internalType": "struct IDittoEntryPoint.Workflow[]",
+        "components": [
+          {
+            "name": "vaultAddress",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "workflowId",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool[]",
+        "internalType": "bool[]"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "runWorkflowWithRevert",
+    "inputs": [
+      {
+        "name": "vaultAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "workflowId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "runWorkflowWithoutRevert",
+    "inputs": [
+      {
+        "name": "vaultAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "workflowId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setParams",
+    "inputs": [
+      {
+        "name": "blockSlotSizeNext",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "epochSizeNext",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "startParamsInit",
+    "inputs": [
+      {
+        "name": "blockSlotSize",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "epochSize",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "strategy",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "delegateManager",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "unregisterExecutor",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "error",
+    "name": "DittoEntryPoint_AlreadyInitialized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "DittoEntryPoint_AlreadyStartParamsInitialized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "DittoEntryPoint_WorkflowReverted",
+    "inputs": []
+  }
+]

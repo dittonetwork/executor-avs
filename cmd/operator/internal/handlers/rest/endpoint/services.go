@@ -1,9 +1,11 @@
 package endpoint
 
 import (
-	api "github.com/dittonetwork/executor-avs/api/operator"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
+
+	api "github.com/dittonetwork/executor-avs/api/operator"
 )
 
 type Service interface {
@@ -43,5 +45,5 @@ func (s *ServicesEndpoint) handle(w http.ResponseWriter, r *http.Request, _ http
 		})
 	}
 
-	s.RespondEasyJson(r.Context(), w, response)
+	s.RespondEasyJSON(r.Context(), w, response)
 }

@@ -1,12 +1,14 @@
 package rest
 
 import (
+	"time"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/justinas/alice"
+
 	"github.com/dittonetwork/executor-avs/pkg/log"
 	"github.com/dittonetwork/executor-avs/pkg/middleware"
 	"github.com/dittonetwork/executor-avs/pkg/service"
-	"github.com/julienschmidt/httprouter"
-	"github.com/justinas/alice"
-	"time"
 )
 
 type Endpoint interface {

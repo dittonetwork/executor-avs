@@ -2,12 +2,15 @@ package service
 
 import (
 	"os"
+	"os/signal"
 	"sync"
 	"syscall"
 
 	"github.com/dittonetwork/executor-avs/pkg/labels"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )
+
+const signalAmount = 2
 
 type Service struct {
 	appName         string
@@ -80,16 +83,32 @@ func RunWait(services ...StartStopper) *sync.WaitGroup {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
+
+	signals := make(chan os.Signal, signalAmount)
+	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+
 	go func() {
 		defer wg.Done()
-		log.With(log.String("signal", Wait([]os.Signal{syscall.SIGTERM, syscall.SIGINT}).String())).Info("received signal")
-		log.Info("stopping")
-		SetReady(false)
-		// stop in reverse order
-		for i := range services {
-			services[len(services)-i-1].Stop()
+		firstSignal := true
+		for sig := range signals {
+			log.With(log.String("signal", sig.String())).Info("received signal")
+			if !firstSignal {
+				log.Info("Forcing shutdown due to second signal")
+				os.Exit(1) // Force exit if second signal received during shutdown
+			}
+			firstSignal = false
+			log.Info("Initiating graceful shutdown...")
+			go shutdownServices(services)
 		}
-		log.Info("bye 👋")
 	}()
 	return wg
+}
+
+func shutdownServices(services []StartStopper) {
+	SetReady(false)
+	// stop in reverse order
+	for i := len(services) - 1; i >= 0; i-- {
+		services[i].Stop()
+	}
+	log.Info("All services stopped gracefully.")
 }
