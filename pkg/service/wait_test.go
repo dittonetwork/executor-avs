@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dittonetwork/executor-avs/pkg/service"
 	"github.com/stretchr/testify/require"
+
+	"github.com/dittonetwork/executor-avs/pkg/service"
 )
 
 func TestWait(t *testing.T) {
