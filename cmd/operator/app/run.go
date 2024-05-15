@@ -48,7 +48,7 @@ func Run() *sync.WaitGroup {
 	entryPoint := dittoentrypoint.New(ethClient)
 
 	// services
-	executorService := executor.NewService(ethClient, entryPoint)
+	executorService := executor.NewService(cfg, ethClient, entryPoint)
 
 	return service.RunWait(
 		executorService,

@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 
 	api "github.com/dittonetwork/executor-avs/api/operator"
+	"github.com/dittonetwork/executor-avs/cmd/operator/config"
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )
@@ -33,8 +34,8 @@ type Service struct {
 	done   chan struct{}
 }
 
-func NewService(client EthereumClient, entryPoint DittoEntryPoint) *Service {
-	runner := NewRunner(client, entryPoint)
+func NewService(cfg config.Config, client EthereumClient, entryPoint DittoEntryPoint) *Service {
+	runner := NewRunner(cfg, client, entryPoint)
 
 	return &Service{
 		runner: runner,
@@ -63,6 +64,8 @@ func (s *Service) Start() {
 			block, err = s.client.BlockByHash(ctx, header.Hash())
 			if err != nil {
 				log.With(log.Err(err)).Error("get block by hash")
+
+				continue
 			}
 
 			if err = s.runner.Handle(ctx, block); err != nil {
@@ -77,5 +80,6 @@ func (s *Service) Start() {
 func (s *Service) Stop() {
 	s.status = api.ServiceStatusTypeDown
 
+	// TODO: Implememt a correct graceful shutdown
 	s.done <- struct{}{}
 }
