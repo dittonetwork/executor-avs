@@ -1,14 +1,13 @@
 package config
 
-import (
-	"github.com/dittonetwork/executor-avs/pkg/config/viper"
-)
-
-const configPath = "./cmd/operator/config/config.yml"
-
 type Config struct {
+	Executor        Executor        `mapstructure:"executor"`
 	Ethereum        Ethereum        `mapstructure:"ethereum"`
 	DittoEntryPoint DittoEntryPoint `mapstructure:"ditto_entrypoint"`
+}
+
+type Executor struct {
+	PrivateKey string `mapstructure:"private_key"`
 }
 
 type Ethereum struct {
@@ -17,11 +16,4 @@ type Ethereum struct {
 
 type DittoEntryPoint struct {
 	ContractAddress string `mapstructure:"contract_address"`
-}
-
-func New() Config {
-	var cfg Config
-	viper.Load(configPath, &cfg)
-
-	return cfg
 }

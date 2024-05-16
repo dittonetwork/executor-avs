@@ -2,22 +2,37 @@ package dittoentrypoint
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/dittonetwork/executor-avs/cmd/operator/internal/adapters/node/ethclient"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
+	"github.com/dittonetwork/executor-avs/contracts/gen/dittoentrypoint"
 )
 
 type DittoEntryPoint struct {
-	ethClient *ethclient.Client
+	dep *dittoentrypoint.Dittoentrypoint
 }
 
-func New(ethClient *ethclient.Client) *DittoEntryPoint {
-	return &DittoEntryPoint{
-		ethClient: ethClient,
+func New(ethClient *ethclient.Client, contractAddress string) (*DittoEntryPoint, error) {
+	dittoEntryPoint := common.HexToAddress(contractAddress)
+
+	dep, err := dittoentrypoint.NewDittoentrypoint(dittoEntryPoint, ethClient)
+	if err != nil {
+		return nil, fmt.Errorf("new ditto entry point: %w", err)
 	}
+
+	return &DittoEntryPoint{
+		dep: dep,
+	}, nil
 }
 
 func (d *DittoEntryPoint) RegisterExecutor(ctx context.Context) error {
+	return nil
+}
+
+func (d *DittoEntryPoint) UnregisterExecutor(ctx context.Context) error {
 	return nil
 }
 

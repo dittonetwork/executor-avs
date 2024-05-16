@@ -61,3 +61,6 @@ endif
 go-lint:
 	@echo "  >  Running golint"
 	golangci-lint run ./...
+
+abi-gen:
+	abigen --abi=./contracts/abi/dittoentrypoint/DittoEntryPoint.json --pkg=dittoentrypoint --out=./contracts/gen/dittoentrypoint/dittoentrypoint.go

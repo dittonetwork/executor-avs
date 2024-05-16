@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 
 	api "github.com/dittonetwork/executor-avs/api/operator"
-	"github.com/dittonetwork/executor-avs/cmd/operator/config"
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )
@@ -34,8 +33,8 @@ type Service struct {
 	done   chan struct{}
 }
 
-func NewService(cfg config.Config, client EthereumClient, entryPoint DittoEntryPoint) *Service {
-	runner := NewRunner(cfg, client, entryPoint)
+func NewService(client EthereumClient, entryPoint DittoEntryPoint, contractAddress string) *Service {
+	runner := NewRunner(client, entryPoint, contractAddress)
 
 	return &Service{
 		runner: runner,

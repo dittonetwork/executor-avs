@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/dittonetwork/executor-avs/cmd/operator/config"
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )
@@ -18,16 +17,17 @@ var (
 )
 
 type Runner struct {
-	cfg        config.Config
 	client     EthereumClient
 	entryPoint DittoEntryPoint
+
+	contractAddress string
 }
 
-func NewRunner(cfg config.Config, client EthereumClient, entryPoint DittoEntryPoint) *Runner {
+func NewRunner(client EthereumClient, entryPoint DittoEntryPoint, contractAddress string) *Runner {
 	return &Runner{
-		cfg:        cfg,
-		client:     client,
-		entryPoint: entryPoint,
+		contractAddress: contractAddress,
+		client:          client,
+		entryPoint:      entryPoint,
 	}
 }
 
@@ -38,7 +38,7 @@ func (r *Runner) Handle(ctx context.Context, block *types.Block) error {
 
 	// log.Info("block", log.String("number", block.Number().String()))
 
-	isExecutor, err := r.entryPoint.IsExecutor(ctx, r.cfg.DittoEntryPoint.ContractAddress)
+	isExecutor, err := r.entryPoint.IsExecutor(ctx, r.contractAddress)
 	if err != nil {
 		return fmt.Errorf("check if is executor: %w", err)
 	}
@@ -49,7 +49,7 @@ func (r *Runner) Handle(ctx context.Context, block *types.Block) error {
 	}
 
 	var isValidExecutor bool
-	isValidExecutor, err = r.entryPoint.IsValidExecutor(ctx, block.Number().Int64(), r.cfg.DittoEntryPoint.ContractAddress)
+	isValidExecutor, err = r.entryPoint.IsValidExecutor(ctx, block.Number().Int64(), r.contractAddress)
 	if err != nil {
 		return fmt.Errorf("check if executor is valid: %w", err)
 	}

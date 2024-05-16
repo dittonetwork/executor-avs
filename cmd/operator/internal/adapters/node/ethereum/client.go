@@ -1,4 +1,4 @@
-package ethclient
+package ethereum
 
 import (
 	"context"
@@ -8,23 +8,16 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-
-	"github.com/dittonetwork/executor-avs/cmd/operator/config"
 )
 
 type Client struct {
 	client *ethclient.Client
 }
 
-func New(cfg config.Config) (*Client, error) {
-	client, err := ethclient.Dial(cfg.Ethereum.NodeURL)
-	if err != nil {
-		return nil, fmt.Errorf("ethereum node connect: %w", err)
-	}
-
+func NewClient(client *ethclient.Client) *Client {
 	return &Client{
 		client: client,
-	}, nil
+	}
 }
 
 func (c *Client) SubscribeNewHead(ctx context.Context) (chan *types.Header, ethereum.Subscription, error) {
