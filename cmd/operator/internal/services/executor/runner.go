@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	ErrBlockIsNil = errors.New("block is nil")
+	ErrBlockIsNil           = errors.New("block is nil")
+	ErrUnregisteredExecutor = errors.New("executor is not registered")
 )
 
 type Runner struct {
@@ -42,10 +43,9 @@ func (r *Runner) Handle(ctx context.Context, block *types.Block) error {
 	if err != nil {
 		return fmt.Errorf("check if is executor: %w", err)
 	}
+
 	if !isExecutor {
-		if err = r.entryPoint.RegisterExecutor(ctx); err != nil {
-			return fmt.Errorf("register executor: %w", err)
-		}
+		return ErrUnregisteredExecutor
 	}
 
 	var isValidExecutor bool
