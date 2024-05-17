@@ -21,30 +21,43 @@ type EthereumClient interface {
 type DittoEntryPoint interface {
 	GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error)
 	RegisterExecutor(ctx context.Context) error
+	UnregisterExecutor(ctx context.Context) error
 	IsExecutor(ctx context.Context, executorAddr string) (bool, error)
 	IsValidExecutor(ctx context.Context, blockNumber int64, executorAddr string) (bool, error)
 	RunWorkflow(ctx context.Context, vaultAddr string, workflowID uint64) error
 }
 
 type Service struct {
-	runner *Runner
-	client EthereumClient
-	status api.ServiceStatusType
-	done   chan struct{}
+	executor        *Executor
+	client          EthereumClient
+	entryPoint      DittoEntryPoint
+	contractAddress string
+	status          api.ServiceStatusType
+
+	isShuttingDown bool
+	done           chan struct{}
 }
 
 func NewService(client EthereumClient, entryPoint DittoEntryPoint, contractAddress string) *Service {
-	runner := NewRunner(client, entryPoint, contractAddress)
+	executor := NewExecutor(client, entryPoint, contractAddress)
 
 	return &Service{
-		runner: runner,
-		client: client,
-		status: api.ServiceStatusTypeDown,
-		done:   make(chan struct{}),
+		executor:        executor,
+		client:          client,
+		entryPoint:      entryPoint,
+		contractAddress: contractAddress,
+		status:          api.ServiceStatusTypeDown,
+		isShuttingDown:  false,
+		done:            make(chan struct{}),
 	}
 }
 
 func (s *Service) Start() {
+	go s.start()
+}
+func (s *Service) start() {
+	log.Info("starting executor")
+
 	ctx := context.Background()
 
 	s.status = api.ServiceStatusTypeActive
@@ -67,18 +80,50 @@ func (s *Service) Start() {
 				continue
 			}
 
-			if err = s.runner.Handle(ctx, block); err != nil {
+			log.With(log.Int64("block_number", block.Number().Int64())).Info("checking if it is executor...")
+
+			var isExecutor bool
+			isExecutor, err = s.executor.CheckIsExecutor(ctx)
+			if err != nil {
+				log.With(log.Err(err)).Error("checking is executor error")
+
+				continue
+			}
+
+			if !isExecutor {
+				log.Info("not executor ❌")
+
+				if s.isShuttingDown {
+					s.done <- struct{}{}
+
+					return
+				}
+
+				continue
+			}
+
+			if err = s.executor.Handle(ctx, block); err != nil {
 				log.With(log.Err(err)).Error("handle block")
 			}
-		case <-s.done:
-			return
 		}
 	}
 }
 
 func (s *Service) Stop() {
+	ctx := context.Background()
+
+	log.Info("stopping the executor service...")
+
+	if err := s.entryPoint.UnregisterExecutor(ctx); err != nil {
+		log.With(log.Err(err)).Error("failed to unregister executor")
+	}
+
+	log.Info("unregistering the executor...")
+
+	s.isShuttingDown = true
 	s.status = api.ServiceStatusTypeDown
 
-	// TODO: Implememt a correct graceful shutdown
-	s.done <- struct{}{}
+	<-s.done
+
+	log.Info("executor is stopped 🫡")
 }

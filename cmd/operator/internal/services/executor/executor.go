@@ -17,22 +17,22 @@ var (
 	ErrUnregisteredExecutor = errors.New("executor is not registered")
 )
 
-type Runner struct {
+type Executor struct {
 	client     EthereumClient
 	entryPoint DittoEntryPoint
 
 	contractAddress string
 }
 
-func NewRunner(client EthereumClient, entryPoint DittoEntryPoint, contractAddress string) *Runner {
-	return &Runner{
+func NewExecutor(client EthereumClient, entryPoint DittoEntryPoint, contractAddress string) *Executor {
+	return &Executor{
 		contractAddress: contractAddress,
 		client:          client,
 		entryPoint:      entryPoint,
 	}
 }
 
-func (r *Runner) Handle(ctx context.Context, block *types.Block) error {
+func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	if block == nil {
 		return ErrBlockIsNil
 	}
@@ -76,7 +76,7 @@ func (r *Runner) Handle(ctx context.Context, block *types.Block) error {
 			defer wg.Done()
 
 			var canRun bool
-			canRun, err = r.simulate(ctx, workflow)
+			canRun, err = r.Simulate(ctx, workflow)
 			if err != nil {
 				errCh <- fmt.Errorf("simulate workflow: %w", err)
 			}
@@ -97,7 +97,7 @@ func (r *Runner) Handle(ctx context.Context, block *types.Block) error {
 	}
 
 	for _, workflow := range executableWorkflows {
-		if err = r.run(ctx, workflow); err != nil {
+		if err = r.Run(ctx, workflow); err != nil {
 			return fmt.Errorf("execute workflow: %w", err)
 		}
 	}
@@ -105,10 +105,19 @@ func (r *Runner) Handle(ctx context.Context, block *types.Block) error {
 	return nil
 }
 
-func (r *Runner) simulate(ctx context.Context, workflow models.Workflow) (bool, error) {
+func (r *Executor) Simulate(ctx context.Context, workflow models.Workflow) (bool, error) {
 	return false, nil
 }
 
-func (r *Runner) run(ctx context.Context, workflow models.Workflow) error {
+func (r *Executor) Run(ctx context.Context, workflow models.Workflow) error {
 	return nil
+}
+
+func (r *Executor) CheckIsExecutor(ctx context.Context) (bool, error) {
+	isValid, err := r.entryPoint.IsExecutor(ctx, r.contractAddress)
+	if err != nil {
+		return false, fmt.Errorf("check is executor: %w", err)
+	}
+
+	return isValid, nil
 }

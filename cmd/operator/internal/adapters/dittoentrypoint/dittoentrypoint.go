@@ -13,6 +13,7 @@ import (
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/contracts/gen/dittoentrypoint"
 	"github.com/dittonetwork/executor-avs/pkg/hex"
+	"github.com/dittonetwork/executor-avs/pkg/log"
 )
 
 type DittoEntryPoint struct {
@@ -56,7 +57,7 @@ func (d *DittoEntryPoint) RegisterExecutor(ctx context.Context) error {
 		return fmt.Errorf("call register executor: %w", err)
 	}
 
-	fmt.Println(tx.Hash())
+	log.With(log.String("tx_hash", tx.Hash().String())).Info("Debug: SUCCESS")
 
 	return nil
 }

@@ -27,7 +27,7 @@ func (s *ServiceHealthEndpoint) Setup(router *httprouter.Router) {
 	router.GET("/eigen/node/services/:service_id/health", s.handle)
 }
 
-func (s *ServiceHealthEndpoint) handle(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
+func (s *ServiceHealthEndpoint) handle(w http.ResponseWriter, _ *http.Request, param httprouter.Params) {
 	if service, ok := s.services[param.ByName("service_id")]; ok {
 		if service.GetStatus() == api.ServiceStatusTypeActive {
 			w.WriteHeader(http.StatusOK)
