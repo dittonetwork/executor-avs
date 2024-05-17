@@ -20,15 +20,12 @@ var (
 type Executor struct {
 	client     EthereumClient
 	entryPoint DittoEntryPoint
-
-	contractAddress string
 }
 
-func NewExecutor(client EthereumClient, entryPoint DittoEntryPoint, contractAddress string) *Executor {
+func NewExecutor(client EthereumClient, entryPoint DittoEntryPoint) *Executor {
 	return &Executor{
-		contractAddress: contractAddress,
-		client:          client,
-		entryPoint:      entryPoint,
+		client:     client,
+		entryPoint: entryPoint,
 	}
 }
 
@@ -37,9 +34,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 		return ErrBlockIsNil
 	}
 
-	// log.Info("block", log.String("number", block.Number().String()))
-
-	isExecutor, err := r.entryPoint.IsExecutor(ctx, r.contractAddress)
+	isExecutor, err := r.entryPoint.IsExecutor(ctx)
 	if err != nil {
 		return fmt.Errorf("check if is executor: %w", err)
 	}
@@ -49,7 +44,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	}
 
 	var isValidExecutor bool
-	isValidExecutor, err = r.entryPoint.IsValidExecutor(ctx, block.Number().Int64(), r.contractAddress)
+	isValidExecutor, err = r.entryPoint.IsValidExecutor(ctx, block.Number().Int64())
 	if err != nil {
 		return fmt.Errorf("check if executor is valid: %w", err)
 	}
@@ -114,7 +109,7 @@ func (r *Executor) Run(ctx context.Context, workflow models.Workflow) error {
 }
 
 func (r *Executor) CheckIsExecutor(ctx context.Context) (bool, error) {
-	isValid, err := r.entryPoint.IsExecutor(ctx, r.contractAddress)
+	isValid, err := r.entryPoint.IsExecutor(ctx)
 	if err != nil {
 		return false, fmt.Errorf("check is executor: %w", err)
 	}

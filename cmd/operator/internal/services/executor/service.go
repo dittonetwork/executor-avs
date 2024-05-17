@@ -22,33 +22,31 @@ type DittoEntryPoint interface {
 	GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error)
 	RegisterExecutor(ctx context.Context) error
 	UnregisterExecutor(ctx context.Context) error
-	IsExecutor(ctx context.Context, executorAddr string) (bool, error)
-	IsValidExecutor(ctx context.Context, blockNumber int64, executorAddr string) (bool, error)
+	IsExecutor(ctx context.Context) (bool, error)
+	IsValidExecutor(ctx context.Context, blockNumber int64) (bool, error)
 	RunWorkflow(ctx context.Context, vaultAddr string, workflowID uint64) error
 }
 
 type Service struct {
-	executor        *Executor
-	client          EthereumClient
-	entryPoint      DittoEntryPoint
-	contractAddress string
-	status          api.ServiceStatusType
+	executor   *Executor
+	client     EthereumClient
+	entryPoint DittoEntryPoint
+	status     api.ServiceStatusType
 
 	isShuttingDown bool
 	done           chan struct{}
 }
 
-func NewService(client EthereumClient, entryPoint DittoEntryPoint, contractAddress string) *Service {
-	executor := NewExecutor(client, entryPoint, contractAddress)
+func NewService(client EthereumClient, entryPoint DittoEntryPoint) *Service {
+	executor := NewExecutor(client, entryPoint)
 
 	return &Service{
-		executor:        executor,
-		client:          client,
-		entryPoint:      entryPoint,
-		contractAddress: contractAddress,
-		status:          api.ServiceStatusTypeDown,
-		isShuttingDown:  false,
-		done:            make(chan struct{}),
+		executor:       executor,
+		client:         client,
+		entryPoint:     entryPoint,
+		status:         api.ServiceStatusTypeDown,
+		isShuttingDown: false,
+		done:           make(chan struct{}),
 	}
 }
 

@@ -42,19 +42,14 @@ func New(ethClient *ethclient.Client, contractAddress, privateKey string) (*Ditt
 }
 
 func (d *DittoEntryPoint) RegisterExecutor(ctx context.Context) error {
-	chainID, err := d.client.NetworkID(ctx)
+	opts, err := d.makeTransacOpts(ctx)
 	if err != nil {
-		return fmt.Errorf("get network id: %w", err)
-	}
-
-	opts, err := bind.NewKeyedTransactorWithChainID(d.privateKey, chainID)
-	if err != nil {
-		return fmt.Errorf("new keyd transactor with chain id: %w", err)
+		return fmt.Errorf("make transac opts: %w", err)
 	}
 
 	tx, err := d.dep.RegisterExecutor(opts)
 	if err != nil {
-		return fmt.Errorf("call register executor: %w", err)
+		return fmt.Errorf("call registerExecutor: %w", err)
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().String())).Info("Debug: SUCCESS")
@@ -63,14 +58,37 @@ func (d *DittoEntryPoint) RegisterExecutor(ctx context.Context) error {
 }
 
 func (d *DittoEntryPoint) UnregisterExecutor(ctx context.Context) error {
+	opts, err := d.makeTransacOpts(ctx)
+	if err != nil {
+		return fmt.Errorf("make transac opts: %w", err)
+	}
+
+	tx, err := d.dep.UnregisterExecutor(opts)
+	if err != nil {
+		return fmt.Errorf("call registerExecutor: %w", err)
+	}
+
+	log.With(log.String("tx_hash", tx.Hash().String())).Info("Debug: SUCCESS")
 	return nil
 }
 
-func (d *DittoEntryPoint) IsExecutor(ctx context.Context, executorAddr string) (bool, error) {
-	return false, nil
+func (d *DittoEntryPoint) IsExecutor(ctx context.Context) (bool, error) {
+	address := crypto.PubkeyToAddress(d.privateKey.PublicKey)
+
+	opts := &bind.CallOpts{
+		From:    address,
+		Context: ctx,
+	}
+
+	isExecutor, err := d.dep.IsExecutor(opts)
+	if err != nil {
+		return false, fmt.Errorf("call isExecutor: %w", err)
+	}
+
+	return isExecutor, nil
 }
 
-func (d *DittoEntryPoint) IsValidExecutor(ctx context.Context, blockNumber int64, executorAddr string) (bool, error) {
+func (d *DittoEntryPoint) IsValidExecutor(ctx context.Context, blockNumber int64) (bool, error) {
 	return false, nil
 }
 
@@ -80,4 +98,18 @@ func (d *DittoEntryPoint) GetAllActiveWorkflows(_ context.Context) ([]models.Wor
 
 func (d *DittoEntryPoint) RunWorkflow(ctx context.Context, vaultAddr string, workflowID uint64) error {
 	return nil
+}
+
+func (d *DittoEntryPoint) makeTransacOpts(ctx context.Context) (*bind.TransactOpts, error) {
+	chainID, err := d.client.NetworkID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get network id: %w", err)
+	}
+
+	opts, err := bind.NewKeyedTransactorWithChainID(d.privateKey, chainID)
+	if err != nil {
+		return nil, fmt.Errorf("new keyd transactor with chain id: %w", err)
+	}
+
+	return opts, nil
 }

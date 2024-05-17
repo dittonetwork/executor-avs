@@ -51,7 +51,7 @@ func Run() *sync.WaitGroup {
 	}
 
 	// services
-	executorService := executor.NewService(ethClient, entryPoint, contractAddress)
+	executorService := executor.NewService(ethClient, entryPoint)
 
 	return service.RunWait(
 		executorService,
