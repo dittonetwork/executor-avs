@@ -1,9 +1,0 @@
-executor:
-  public_key: 0xF2e8d49AD20fE2613190272e7f82a7aEeC5a349F
-  private_key: 25857495443490286522888033578720309203804780981578307340846347593809968240132
-
-ethereum:
-  node_url: "wss://silent-tame-seed.ethereum-holesky.quiknode.pro/a09b2aafbc9447b172c9964f3ac40c85edf5fd6a/"
-
-ditto_entrypoint:
-  contract_address: "0x9201cFC00bB9fE0477b51560123660183bf2026A"
