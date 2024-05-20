@@ -1,8 +1,12 @@
 package models
 
-import "github.com/ethereum/go-ethereum/core/types"
+import (
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+)
 
 type Workflow struct {
-	VaultAddress types.Account
-	WorkflowID   uint64
+	VaultAddress common.Address
+	WorkflowID   *big.Int
 }

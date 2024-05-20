@@ -55,7 +55,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 		return nil
 	}
 
-	workflows, err := r.entryPoint.GetAllActiveWorkflows(ctx)
+	workflows, err := r.entryPoint.GetAllActiveWorkflows(ctx, block.Number(), block.Number())
 	if err != nil {
 		return fmt.Errorf("get all active workflows: %w", err)
 	}
@@ -67,6 +67,11 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	executableWorkflows := make([]models.Workflow, 0, len(workflows))
 
 	for _, workflow := range workflows {
+		log.With(
+			log.String("vault_addr", workflow.VaultAddress.String()),
+			log.String("workflow_id", workflow.WorkflowID.String()),
+		).Info("active workflow")
+
 		go func(workflow models.Workflow) {
 			defer wg.Done()
 

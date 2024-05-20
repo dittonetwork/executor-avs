@@ -107,8 +107,21 @@ func (d *DittoEntryPoint) IsValidExecutor(ctx context.Context, blockNumber *big.
 	return isValidExecutor, nil
 }
 
-func (d *DittoEntryPoint) GetAllActiveWorkflows(_ context.Context) ([]models.Workflow, error) {
-	return make([]models.Workflow, 0), nil
+func (d *DittoEntryPoint) GetAllActiveWorkflows(_ context.Context, from, to *big.Int) ([]models.Workflow, error) {
+	workflows, err := d.dep.GetActiveWorkflows(nil, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("call getActiveWorkflows: %w", err)
+	}
+
+	result := make([]models.Workflow, 0, len(workflows))
+	for _, workflow := range workflows {
+		result = append(result, models.Workflow{
+			VaultAddress: workflow.VaultAddress,
+			WorkflowID:   workflow.WorkflowId,
+		})
+	}
+
+	return result, nil
 }
 
 func (d *DittoEntryPoint) RunWorkflow(ctx context.Context, vaultAddr string, workflowID uint64) error {
@@ -129,6 +142,15 @@ func (d *DittoEntryPoint) ArrangeExecutors(ctx context.Context) error {
 	log.With(log.String("tx_hash", tx.Hash().String())).Info("arrange executors")
 
 	return nil
+}
+
+func (d *DittoEntryPoint) GetAmountExecutors(ctx context.Context) (*big.Int, error) {
+	amount, err := d.dep.GetAmountExecutors(&bind.CallOpts{Context: ctx})
+	if err != nil {
+		return nil, fmt.Errorf("call arrange executors: %w", err)
+	}
+
+	return amount, nil
 }
 
 func (d *DittoEntryPoint) makeTransacOpts(ctx context.Context) (*bind.TransactOpts, error) {

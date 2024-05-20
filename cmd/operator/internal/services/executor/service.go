@@ -20,8 +20,9 @@ type EthereumClient interface {
 }
 
 type DittoEntryPoint interface {
-	GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error)
+	GetAllActiveWorkflows(ctx context.Context, from, to *big.Int) ([]models.Workflow, error)
 	UnregisterExecutor(ctx context.Context) error
+	ArrangeExecutors(ctx context.Context) error
 	IsExecutor(ctx context.Context) (bool, error)
 	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
 	RunWorkflow(ctx context.Context, vaultAddr string, workflowID uint64) error
@@ -112,9 +113,15 @@ func (s *Service) Stop() {
 
 	log.Info("stopping the executor service...")
 
+	// TODO: add retry logic
 	if err := s.entryPoint.UnregisterExecutor(ctx); err != nil {
 		log.With(log.Err(err)).Error("failed to unregister executor")
 	}
+
+	if err := s.entryPoint.ArrangeExecutors(ctx); err != nil {
+		log.With(log.Err(err)).Error("failed to arrange executors")
+	}
+	//
 
 	log.Info("unregistering the executor...")
 
