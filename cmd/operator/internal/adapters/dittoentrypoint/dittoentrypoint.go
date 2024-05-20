@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -52,7 +53,7 @@ func (d *DittoEntryPoint) RegisterExecutor(ctx context.Context) error {
 		return fmt.Errorf("call registerExecutor: %w", err)
 	}
 
-	log.With(log.String("tx_hash", tx.Hash().String())).Info("Debug: SUCCESS")
+	log.With(log.String("tx_hash", tx.Hash().String())).Info("register as operator")
 
 	return nil
 }
@@ -68,7 +69,8 @@ func (d *DittoEntryPoint) UnregisterExecutor(ctx context.Context) error {
 		return fmt.Errorf("call registerExecutor: %w", err)
 	}
 
-	log.With(log.String("tx_hash", tx.Hash().String())).Info("Debug: SUCCESS")
+	log.With(log.String("tx_hash", tx.Hash().String())).Info("unregister as operator")
+
 	return nil
 }
 
@@ -88,8 +90,21 @@ func (d *DittoEntryPoint) IsExecutor(ctx context.Context) (bool, error) {
 	return isExecutor, nil
 }
 
-func (d *DittoEntryPoint) IsValidExecutor(ctx context.Context, blockNumber int64) (bool, error) {
-	return false, nil
+func (d *DittoEntryPoint) IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error) {
+	address := crypto.PubkeyToAddress(d.privateKey.PublicKey)
+
+	opts := &bind.CallOpts{
+		From:        address,
+		Context:     ctx,
+		BlockNumber: blockNumber,
+	}
+
+	isValidExecutor, err := d.dep.IsValidExecutor(opts, blockNumber, address)
+	if err != nil {
+		return false, fmt.Errorf("call isValidExecutor: %w", err)
+	}
+
+	return isValidExecutor, nil
 }
 
 func (d *DittoEntryPoint) GetAllActiveWorkflows(_ context.Context) ([]models.Workflow, error) {
@@ -97,6 +112,22 @@ func (d *DittoEntryPoint) GetAllActiveWorkflows(_ context.Context) ([]models.Wor
 }
 
 func (d *DittoEntryPoint) RunWorkflow(ctx context.Context, vaultAddr string, workflowID uint64) error {
+	return nil
+}
+
+func (d *DittoEntryPoint) ArrangeExecutors(ctx context.Context) error {
+	opts, err := d.makeTransacOpts(ctx)
+	if err != nil {
+		return fmt.Errorf("make transac opts: %w", err)
+	}
+
+	tx, err := d.dep.ArrangeExecutors(opts)
+	if err != nil {
+		return fmt.Errorf("call arrange executors: %w", err)
+	}
+
+	log.With(log.String("tx_hash", tx.Hash().String())).Info("arrange executors")
+
 	return nil
 }
 

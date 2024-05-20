@@ -31,6 +31,17 @@ func UnregisterExecutor() {
 	}
 }
 
+func ArrangeExecutors() {
+	dep, err := initDittoEntryPoint()
+	if err != nil {
+		log.With(log.Err(err)).Fatal("ditto entrypoint init error")
+	}
+
+	if err = dep.ArrangeExecutors(context.Background()); err != nil {
+		log.With(log.Err(err)).Fatal("arrange executor error")
+	}
+}
+
 func initDittoEntryPoint() (*dittoentrypoint.DittoEntryPoint, error) {
 	conn, err := ethclient.Dial(nodeURL)
 	if err != nil {

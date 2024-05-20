@@ -44,7 +44,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	}
 
 	var isValidExecutor bool
-	isValidExecutor, err = r.entryPoint.IsValidExecutor(ctx, block.Number().Int64())
+	isValidExecutor, err = r.entryPoint.IsValidExecutor(ctx, block.Number())
 	if err != nil {
 		return fmt.Errorf("check if executor is valid: %w", err)
 	}

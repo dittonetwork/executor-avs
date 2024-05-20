@@ -37,15 +37,23 @@ var (
 			UnregisterExecutor()
 		},
 	}
+	arrangeExecutorsCmd = &cobra.Command{
+		Use:   "arrange",
+		Short: "Arrange executors",
+		Run: func(_ *cobra.Command, _ []string) {
+			ArrangeExecutors()
+		},
+	}
 )
 
 func InitCommands() {
-	initCommonFlags(runCmd, registerCmd, unregisterCmd)
+	initCommonFlags(runCmd, registerCmd, unregisterCmd, arrangeExecutorsCmd)
 	initRunFlags(runCmd)
 
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(registerCmd)
 	rootCmd.AddCommand(unregisterCmd)
+	rootCmd.AddCommand(arrangeExecutorsCmd)
 }
 
 func initCommonFlags(cmds ...*cobra.Command) {

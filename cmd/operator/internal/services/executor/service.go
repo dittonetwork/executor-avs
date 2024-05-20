@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,10 +21,9 @@ type EthereumClient interface {
 
 type DittoEntryPoint interface {
 	GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error)
-	RegisterExecutor(ctx context.Context) error
 	UnregisterExecutor(ctx context.Context) error
 	IsExecutor(ctx context.Context) (bool, error)
-	IsValidExecutor(ctx context.Context, blockNumber int64) (bool, error)
+	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
 	RunWorkflow(ctx context.Context, vaultAddr string, workflowID uint64) error
 }
 
