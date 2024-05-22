@@ -107,8 +107,10 @@ func (d *DittoEntryPoint) IsValidExecutor(ctx context.Context, blockNumber *big.
 	return isValidExecutor, nil
 }
 
-func (d *DittoEntryPoint) GetAllActiveWorkflows(_ context.Context, from, to *big.Int) ([]models.Workflow, error) {
-	workflows, err := d.dep.GetActiveWorkflows(nil, from, to)
+func (d *DittoEntryPoint) GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error) {
+	workflows, err := d.dep.GetAllActiveWorkflows(&bind.CallOpts{
+		Context: ctx,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("call getActiveWorkflows: %w", err)
 	}

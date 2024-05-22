@@ -20,7 +20,7 @@ type EthereumClient interface {
 }
 
 type DittoEntryPoint interface {
-	GetAllActiveWorkflows(ctx context.Context, from, to *big.Int) ([]models.Workflow, error)
+	GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error)
 	UnregisterExecutor(ctx context.Context) error
 	ArrangeExecutors(ctx context.Context) error
 	IsExecutor(ctx context.Context) (bool, error)

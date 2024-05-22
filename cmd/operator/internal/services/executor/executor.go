@@ -55,7 +55,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 		return nil
 	}
 
-	workflows, err := r.entryPoint.GetAllActiveWorkflows(ctx, block.Number(), block.Number())
+	workflows, err := r.entryPoint.GetAllActiveWorkflows(ctx)
 	if err != nil {
 		return fmt.Errorf("get all active workflows: %w", err)
 	}
