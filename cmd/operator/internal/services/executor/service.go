@@ -15,8 +15,9 @@ import (
 
 type EthereumClient interface {
 	SubscribeNewHead(ctx context.Context) (chan *types.Header, ethereum.Subscription, error)
-	EstimateGas(ctx context.Context, msg types.Transaction) (uint64, error)
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
+	SimulateTransfer(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (bool, error)
+	SendTransaction(ctx context.Context, tx *types.Transaction) error
 }
 
 type DittoEntryPoint interface {
@@ -25,7 +26,7 @@ type DittoEntryPoint interface {
 	ArrangeExecutors(ctx context.Context) error
 	IsExecutor(ctx context.Context) (bool, error)
 	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
-	RunWorkflow(ctx context.Context, vaultAddr string, workflowID uint64) error
+	RunWorkflow(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (*types.Transaction, error)
 }
 
 type Service struct {
@@ -109,21 +110,7 @@ func (s *Service) start() {
 }
 
 func (s *Service) Stop() {
-	ctx := context.Background()
-
 	log.Info("stopping the executor service...")
-
-	// TODO: add retry logic
-	if err := s.entryPoint.UnregisterExecutor(ctx); err != nil {
-		log.With(log.Err(err)).Error("failed to unregister executor")
-	}
-
-	if err := s.entryPoint.ArrangeExecutors(ctx); err != nil {
-		log.With(log.Err(err)).Error("failed to arrange executors")
-	}
-	//
-
-	log.Info("unregistering the executor...")
 
 	s.isShuttingDown = true
 	s.status = api.ServiceStatusTypeDown

@@ -2,22 +2,34 @@ package ethereum
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type Client struct {
-	client *ethclient.Client
+	contractAddr string
+	client       *ethclient.Client
+	privateKey   *ecdsa.PrivateKey
 }
 
-func NewClient(client *ethclient.Client) *Client {
-	return &Client{
-		client: client,
+func NewClient(client *ethclient.Client, contractAddr, privateKey string) (*Client, error) {
+	pk, err := crypto.HexToECDSA(privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("hex to ecdsa: %w", err)
 	}
+
+	return &Client{
+		client:       client,
+		contractAddr: contractAddr,
+		privateKey:   pk,
+	}, nil
 }
 
 func (c *Client) SubscribeNewHead(ctx context.Context) (chan *types.Header, ethereum.Subscription, error) {
@@ -34,6 +46,34 @@ func (c *Client) BlockByHash(ctx context.Context, hash common.Hash) (*types.Bloc
 	return c.client.BlockByHash(ctx, hash)
 }
 
-func (c *Client) EstimateGas(ctx context.Context, msg types.Transaction) (uint64, error) {
-	return 0, nil
+func (c *Client) SimulateTransfer(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (bool, error) {
+	var result interface{}
+
+	fmt.Println("tx.Data():", tx.Data())
+
+	err := c.client.Client().CallContext(ctx, &result, "eth_call", map[string]interface{}{
+		"to":    common.HexToAddress(c.contractAddr),
+		"data":  tx.Data(),
+		"block": blockNum.Int64(),
+	})
+	if err != nil {
+		return false, fmt.Errorf("call eth_call: %w", err)
+	}
+
+	fmt.Println("result:", result)
+
+	return true, nil
+}
+
+func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) error {
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(tx.ChainId()), c.privateKey)
+	if err != nil {
+		return fmt.Errorf("sign tx: %w", err)
+	}
+
+	if err = c.client.SendTransaction(ctx, signedTx); err != nil {
+		return fmt.Errorf("send tx: %w", err)
+	}
+
+	return nil
 }

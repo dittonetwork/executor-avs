@@ -40,10 +40,13 @@ func Run() *sync.WaitGroup {
 	// adapters
 	conn, err := ethclient.Dial(nodeURL)
 	if err != nil {
-		log.With(log.Err(err)).Fatal("ethereum client init error")
+		log.With(log.Err(err)).Fatal("ether client dial error")
 	}
 
-	ethClient := ethereum.NewClient(conn)
+	ethClient, err := ethereum.NewClient(conn, contractAddress, privateKey)
+	if err != nil {
+		log.With(log.Err(err)).Fatal("ethereum client init error")
+	}
 
 	entryPoint, err := dittoentrypoint.New(conn, contractAddress, privateKey)
 	if err != nil {

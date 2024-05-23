@@ -29,6 +29,8 @@ Use Holesky Testnet
     --private-key 67690922275186342153160243748991894478440812240329176884047813007980001353474
 ```
 
+(Will be removed after contract is fixed)
+
 ```bash
 ./bin/operator arrange \
     --node-url wss://silent-tame-seed.ethereum-holesky.quiknode.pro/a09b2aafbc9447b172c9964f3ac40c85edf5fd6a \

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/core/types"
@@ -76,7 +77,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 			defer wg.Done()
 
 			var canRun bool
-			canRun, err = r.Simulate(ctx, workflow)
+			canRun, err = r.Simulate(ctx, workflow, block.Number())
 			if err != nil {
 				errCh <- fmt.Errorf("simulate workflow: %w", err)
 			}
@@ -97,19 +98,41 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	}
 
 	for _, workflow := range executableWorkflows {
-		if err = r.Run(ctx, workflow); err != nil {
+		if err = r.ExecuteWorkflow(ctx, workflow); err != nil {
 			return fmt.Errorf("execute workflow: %w", err)
 		}
+
+		log.With(log.Int64("workflow_id", workflow.WorkflowID.Int64())).Info("workflow executed")
 	}
 
 	return nil
 }
 
-func (r *Executor) Simulate(ctx context.Context, workflow models.Workflow) (bool, error) {
-	return false, nil
+func (r *Executor) Simulate(ctx context.Context, workflow models.Workflow, blockNum *big.Int) (bool, error) {
+	tx, err := r.entryPoint.RunWorkflow(ctx, workflow.VaultAddress, workflow.WorkflowID)
+	if err != nil {
+		return false, fmt.Errorf("run workflow: %w", err)
+	}
+
+	var canRun bool
+	canRun, err = r.client.SimulateTransfer(ctx, tx, blockNum)
+	if err != nil {
+		return false, fmt.Errorf("simulate transfer: %w", err)
+	}
+
+	return canRun, nil
 }
 
-func (r *Executor) Run(ctx context.Context, workflow models.Workflow) error {
+func (r *Executor) ExecuteWorkflow(ctx context.Context, workflow models.Workflow) error {
+	tx, err := r.entryPoint.RunWorkflow(ctx, workflow.VaultAddress, workflow.WorkflowID)
+	if err != nil {
+		return fmt.Errorf("run workflow: %w", err)
+	}
+
+	if err = r.client.SendTransaction(ctx, tx); err != nil {
+		return fmt.Errorf("send transaction: %w", err)
+	}
+
 	return nil
 }
 

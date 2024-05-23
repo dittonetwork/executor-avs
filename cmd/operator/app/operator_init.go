@@ -45,12 +45,6 @@ func ArrangeExecutors() {
 
 	log.With(log.Int64("executors_amount", executorsAmount.Int64())).Info("executors amount")
 
-	// if executorsAmount.Int64() != 1 {
-	// 	log.Info("there must be only 1 executor registered to call ArrangeExecutors")
-
-	// 	return
-	// }
-
 	if err = dep.ArrangeExecutors(ctx); err != nil {
 		log.With(log.Err(err)).Fatal("arrange executor error")
 	}

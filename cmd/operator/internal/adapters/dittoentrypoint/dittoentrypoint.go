@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -78,8 +79,8 @@ func (d *DittoEntryPoint) IsExecutor(ctx context.Context) (bool, error) {
 	address := crypto.PubkeyToAddress(d.privateKey.PublicKey)
 
 	opts := &bind.CallOpts{
-		From:    address,
 		Context: ctx,
+		From:    address,
 	}
 
 	isExecutor, err := d.dep.IsExecutor(opts)
@@ -94,8 +95,8 @@ func (d *DittoEntryPoint) IsValidExecutor(ctx context.Context, blockNumber *big.
 	address := crypto.PubkeyToAddress(d.privateKey.PublicKey)
 
 	opts := &bind.CallOpts{
-		From:        address,
 		Context:     ctx,
+		From:        address,
 		BlockNumber: blockNumber,
 	}
 
@@ -112,7 +113,7 @@ func (d *DittoEntryPoint) GetAllActiveWorkflows(ctx context.Context) ([]models.W
 		Context: ctx,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("call getActiveWorkflows: %w", err)
+		return nil, fmt.Errorf("call getAllActiveWorkflows: %w", err)
 	}
 
 	result := make([]models.Workflow, 0, len(workflows))
@@ -126,8 +127,16 @@ func (d *DittoEntryPoint) GetAllActiveWorkflows(ctx context.Context) ([]models.W
 	return result, nil
 }
 
-func (d *DittoEntryPoint) RunWorkflow(ctx context.Context, vaultAddr string, workflowID uint64) error {
-	return nil
+func (d *DittoEntryPoint) RunWorkflow(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (
+	*types.Transaction, error,
+) {
+	tx, err := d.dep.RunWorkflow(&bind.TransactOpts{Context: ctx}, vaultAddr, workflowID)
+	if err != nil {
+		return nil, fmt.Errorf("call runWorkflow: %w", err)
+
+	}
+
+	return tx, nil
 }
 
 func (d *DittoEntryPoint) ArrangeExecutors(ctx context.Context) error {
