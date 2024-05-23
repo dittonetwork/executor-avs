@@ -62,7 +62,7 @@ func (c *Client) SimulateTransfer(ctx context.Context, tx *types.Transaction, bl
 
 	log.With(log.Any("result", result)).Info("simulate transfer debug log")
 
-	return true, nil
+	return false, nil
 }
 
 func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) error {

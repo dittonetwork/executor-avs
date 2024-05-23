@@ -97,6 +97,10 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 		}
 	}
 
+	if len(executableWorkflows) == 0 {
+		return nil
+	}
+
 	if err = r.ExecuteWorkflows(ctx, executableWorkflows); err != nil {
 		return fmt.Errorf("execute workflows: %w", err)
 	}
