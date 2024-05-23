@@ -10,6 +10,7 @@ import (
 	"github.com/dittonetwork/executor-avs/pkg/log"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -48,21 +49,20 @@ func (c *Client) BlockByHash(ctx context.Context, hash common.Hash) (*types.Bloc
 	return c.client.BlockByHash(ctx, hash)
 }
 
-func (c *Client) SimulateTransfer(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (bool, error) {
-	var result interface{}
-
+func (c *Client) SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int, result interface{}) error {
 	err := c.client.Client().CallContext(ctx, &result, "eth_call", map[string]interface{}{
+		"from":  crypto.PubkeyToAddress(c.privateKey.PublicKey),
 		"to":    common.HexToAddress(c.contractAddr),
-		"data":  tx.Data(),
+		"data":  hexutil.Encode(tx.Data()),
 		"block": blockNum.Int64(),
 	})
 	if err != nil {
-		return false, fmt.Errorf("call eth_call: %w", err)
+		return fmt.Errorf("call eth_call: %w", err)
 	}
 
-	log.With(log.Any("result", result)).Info("simulate transfer debug log")
+	log.With(log.Any("result", result)).Debug("simulate transfer debug log")
 
-	return false, nil
+	return nil
 }
 
 func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) error {

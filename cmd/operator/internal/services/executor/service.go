@@ -11,12 +11,13 @@ import (
 	api "github.com/dittonetwork/executor-avs/api/operator"
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
+	"github.com/dittonetwork/executor-avs/pkg/service"
 )
 
 type EthereumClient interface {
 	SubscribeNewHead(ctx context.Context) (chan *types.Header, ethereum.Subscription, error)
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
-	SimulateTransfer(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (bool, error)
+	SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int, result interface{}) error
 	SendTransaction(ctx context.Context, tx *types.Transaction) error
 }
 
@@ -26,7 +27,7 @@ type DittoEntryPoint interface {
 	ArrangeExecutors(ctx context.Context) error
 	IsExecutor(ctx context.Context) (bool, error)
 	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
-	RunWorkflow(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (*types.Transaction, error)
+	GetRunWorkflowTx(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (*types.Transaction, error)
 	RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow) (*types.Transaction, error)
 }
 
@@ -120,3 +121,5 @@ func (s *Service) Stop() {
 
 	log.Info("executor is stopped 🫡")
 }
+
+var _ service.StartStopper = (*Service)(nil)

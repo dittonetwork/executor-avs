@@ -65,32 +65,23 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	errCh := make(chan error, len(workflows))
 	wg.Add(len(workflows))
 
-	executableWorkflows := make([]models.Workflow, 0, len(workflows))
-	var mu *sync.Mutex
-
 	for _, workflow := range workflows {
 		log.With(
 			log.String("vault_addr", workflow.VaultAddress.String()),
 			log.String("workflow_id", workflow.WorkflowID.String()),
 		).Info("active workflow")
 
-		go func(mu *sync.Mutex, workflow models.Workflow) {
+		go func(workflow models.Workflow) {
 			defer wg.Done()
 
 			var canRun bool
 			canRun, err = r.Simulate(ctx, workflow, block.Number())
 			if err != nil {
 				errCh <- fmt.Errorf("simulate workflow %d: %w", workflow.WorkflowID.Int64(), err)
+				return
 			}
-
-			if canRun {
-				log.With(log.String("workflow_id", workflow.WorkflowID.String())).Info("workflow is executable")
-
-				mu.Lock()
-				executableWorkflows = append(executableWorkflows, workflow)
-				mu.Unlock()
-			}
-		}(mu, workflow)
+			workflow.CouldBeExecuted = canRun
+		}(workflow)
 	}
 
 	wg.Wait()
@@ -102,8 +93,11 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 		}
 	}
 
-	if len(executableWorkflows) == 0 {
-		return nil
+	var executableWorkflows []models.Workflow
+	for _, workflow := range workflows {
+		if workflow.CouldBeExecuted {
+			executableWorkflows = append(executableWorkflows, workflow)
+		}
 	}
 
 	if err = r.ExecuteWorkflows(ctx, executableWorkflows); err != nil {
@@ -113,19 +107,42 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	return nil
 }
 
+type WorkflowSimulationResponse struct {
+	Result string `json:"result"`
+}
+
+func hexStringToBool(hexStr string) (bool, error) {
+	value := new(big.Int)
+	_, isSuccess := value.SetString(hexStr, 0)
+
+	if !isSuccess {
+		return false, fmt.Errorf("invalid hex format: %s", hexStr)
+	}
+
+	return value.Cmp(big.NewInt(0)) != 0, nil
+}
+
 func (r *Executor) Simulate(ctx context.Context, workflow models.Workflow, blockNum *big.Int) (bool, error) {
-	tx, err := r.entryPoint.RunWorkflow(ctx, workflow.VaultAddress, workflow.WorkflowID)
+	tx, err := r.entryPoint.GetRunWorkflowTx(ctx, workflow.VaultAddress, workflow.WorkflowID)
 	if err != nil {
 		return false, fmt.Errorf("run workflow: %w", err)
 	}
 
-	var canRun bool
-	canRun, err = r.client.SimulateTransfer(ctx, tx, blockNum)
+	var resp string
+	err = r.client.SimulateTransaction(ctx, tx, blockNum, &resp)
 	if err != nil {
-		return false, fmt.Errorf("simulate transfer: %w", err)
+		return false, fmt.Errorf("simulate transaction: %w", err)
 	}
 
-	return canRun, nil
+	isSuccess, err := hexStringToBool(resp)
+	if err != nil {
+		return false, fmt.Errorf("rror interpreting result: %s", err)
+	}
+	log.With(
+		log.Bool("result", isSuccess),
+	).Debug("Simulation done")
+
+	return isSuccess, nil
 }
 
 func (r *Executor) ExecuteWorkflows(ctx context.Context, workflows []models.Workflow) error {

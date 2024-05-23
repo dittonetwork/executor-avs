@@ -7,6 +7,7 @@ import (
 )
 
 type Workflow struct {
-	VaultAddress common.Address
-	WorkflowID   *big.Int
+	VaultAddress    common.Address
+	WorkflowID      *big.Int
+	CouldBeExecuted bool
 }
