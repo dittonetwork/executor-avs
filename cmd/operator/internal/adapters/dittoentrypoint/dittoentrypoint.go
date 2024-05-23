@@ -133,7 +133,6 @@ func (d *DittoEntryPoint) RunWorkflow(ctx context.Context, vaultAddr common.Addr
 	tx, err := d.dep.RunWorkflow(&bind.TransactOpts{Context: ctx}, vaultAddr, workflowID)
 	if err != nil {
 		return nil, fmt.Errorf("call runWorkflow: %w", err)
-
 	}
 
 	return tx, nil

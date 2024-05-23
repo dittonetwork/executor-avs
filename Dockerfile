@@ -21,6 +21,5 @@ ARG APP
 RUN apk add --no-cache tzdata && apk --no-cache add ca-certificates
 
 COPY --from=builder /app/bin/app /bin/app
-COPY --from=builder /app/cmd/$APP/config/config.yml /config/
 
-ENTRYPOINT ["/bin/app", "-c", "/config/config.yml"]
+ENTRYPOINT ["/bin/app"]

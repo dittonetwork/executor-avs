@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/dittonetwork/executor-avs/pkg/log"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -49,8 +50,6 @@ func (c *Client) BlockByHash(ctx context.Context, hash common.Hash) (*types.Bloc
 func (c *Client) SimulateTransfer(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (bool, error) {
 	var result interface{}
 
-	fmt.Println("tx.Data():", tx.Data())
-
 	err := c.client.Client().CallContext(ctx, &result, "eth_call", map[string]interface{}{
 		"to":    common.HexToAddress(c.contractAddr),
 		"data":  tx.Data(),
@@ -60,7 +59,7 @@ func (c *Client) SimulateTransfer(ctx context.Context, tx *types.Transaction, bl
 		return false, fmt.Errorf("call eth_call: %w", err)
 	}
 
-	fmt.Println("result:", result)
+	log.With(log.Any("result", result)).Info("simulate transfer debug log")
 
 	return true, nil
 }
