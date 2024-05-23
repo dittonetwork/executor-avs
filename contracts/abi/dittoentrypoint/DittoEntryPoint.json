@@ -262,7 +262,25 @@
   },
   {
     "type": "function",
-    "name": "runWorkflow",
+    "name": "runWorkflowWithRevert",
+    "inputs": [
+      {
+        "name": "vaultAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "workflowId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "runWorkflowWithoutRevert",
     "inputs": [
       {
         "name": "vaultAddress",
@@ -282,24 +300,6 @@
         "internalType": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "runWorkflowWithRevert",
-    "inputs": [
-      {
-        "name": "vaultAddress",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "workflowId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
     "stateMutability": "nonpayable"
   },
   {

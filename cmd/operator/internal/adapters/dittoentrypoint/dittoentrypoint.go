@@ -130,7 +130,7 @@ func (d *DittoEntryPoint) GetAllActiveWorkflows(ctx context.Context) ([]models.W
 func (d *DittoEntryPoint) RunWorkflow(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (
 	*types.Transaction, error,
 ) {
-	tx, err := d.dep.RunWorkflow(&bind.TransactOpts{Context: ctx}, vaultAddr, workflowID)
+	tx, err := d.dep.RunWorkflowWithoutRevert(&bind.TransactOpts{Context: ctx}, vaultAddr, workflowID)
 	if err != nil {
 		return nil, fmt.Errorf("call runWorkflow: %w", err)
 	}
