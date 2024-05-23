@@ -27,6 +27,7 @@ type DittoEntryPoint interface {
 	IsExecutor(ctx context.Context) (bool, error)
 	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
 	RunWorkflow(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (*types.Transaction, error)
+	RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow) (*types.Transaction, error)
 }
 
 type Service struct {

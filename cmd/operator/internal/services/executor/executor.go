@@ -97,12 +97,8 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 		}
 	}
 
-	for _, workflow := range executableWorkflows {
-		if err = r.ExecuteWorkflow(ctx, workflow); err != nil {
-			return fmt.Errorf("execute workflow: %w", err)
-		}
-
-		log.With(log.Int64("workflow_id", workflow.WorkflowID.Int64())).Info("workflow executed")
+	if err = r.ExecuteWorkflows(ctx, executableWorkflows); err != nil {
+		return fmt.Errorf("execute workflows: %w", err)
 	}
 
 	return nil
@@ -123,10 +119,10 @@ func (r *Executor) Simulate(ctx context.Context, workflow models.Workflow, block
 	return canRun, nil
 }
 
-func (r *Executor) ExecuteWorkflow(ctx context.Context, workflow models.Workflow) error {
-	tx, err := r.entryPoint.RunWorkflow(ctx, workflow.VaultAddress, workflow.WorkflowID)
+func (r *Executor) ExecuteWorkflows(ctx context.Context, workflows []models.Workflow) error {
+	tx, err := r.entryPoint.RunMultipleWorkflows(ctx, workflows)
 	if err != nil {
-		return fmt.Errorf("run workflow: %w", err)
+		return fmt.Errorf("run multiple workflows: %w", err)
 	}
 
 	if err = r.client.SendTransaction(ctx, tx); err != nil {

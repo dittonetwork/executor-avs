@@ -130,9 +130,32 @@ func (d *DittoEntryPoint) GetAllActiveWorkflows(ctx context.Context) ([]models.W
 func (d *DittoEntryPoint) RunWorkflow(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (
 	*types.Transaction, error,
 ) {
-	tx, err := d.dep.RunWorkflowWithoutRevert(&bind.TransactOpts{Context: ctx}, vaultAddr, workflowID)
+	tx, err := d.dep.RunWorkflowWithoutRevert(&bind.TransactOpts{
+		Context: ctx,
+		NoSend:  true,
+	}, vaultAddr, workflowID)
 	if err != nil {
-		return nil, fmt.Errorf("call runWorkflow: %w", err)
+		return nil, fmt.Errorf("call runWorkflowWithoutRevert: %w", err)
+	}
+
+	return tx, nil
+}
+
+func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow) (
+	*types.Transaction, error,
+) {
+	wfs := make([]dittoentrypoint.IDittoEntryPointWorkflow, 0, len(workflows))
+
+	for _, workflow := range workflows {
+		wfs = append(wfs, dittoentrypoint.IDittoEntryPointWorkflow{
+			VaultAddress: workflow.VaultAddress,
+			WorkflowId:   workflow.WorkflowID,
+		})
+	}
+
+	tx, err := d.dep.RunMultipleWorkflows(&bind.TransactOpts{Context: ctx}, wfs)
+	if err != nil {
+		return nil, fmt.Errorf("call runMultipleWorkflows: %w", err)
 	}
 
 	return tx, nil

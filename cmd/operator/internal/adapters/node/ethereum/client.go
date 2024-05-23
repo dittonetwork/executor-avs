@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/dittonetwork/executor-avs/pkg/hex"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -21,7 +22,7 @@ type Client struct {
 }
 
 func NewClient(client *ethclient.Client, contractAddr, privateKey string) (*Client, error) {
-	pk, err := crypto.HexToECDSA(privateKey)
+	pk, err := crypto.HexToECDSA(hex.ConvertTo16Bit(privateKey))
 	if err != nil {
 		return nil, fmt.Errorf("hex to ecdsa: %w", err)
 	}
