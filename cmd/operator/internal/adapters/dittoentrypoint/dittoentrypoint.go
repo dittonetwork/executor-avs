@@ -19,9 +19,10 @@ import (
 )
 
 type DittoEntryPoint struct {
-	client     *ethclient.Client
-	dep        *dittoentrypoint.Dittoentrypoint
-	privateKey *ecdsa.PrivateKey
+	client       *ethclient.Client
+	dep          *dittoentrypoint.Dittoentrypoint
+	privateKey   *ecdsa.PrivateKey
+	contractAddr common.Address
 }
 
 func New(ethClient *ethclient.Client, contractAddress, privateKey string) (*DittoEntryPoint, error) {
@@ -37,9 +38,10 @@ func New(ethClient *ethclient.Client, contractAddress, privateKey string) (*Ditt
 	}
 
 	return &DittoEntryPoint{
-		client:     ethClient,
-		dep:        dep,
-		privateKey: privateKeyECDSA,
+		client:       ethClient,
+		dep:          dep,
+		privateKey:   privateKeyECDSA,
+		contractAddr: common.HexToAddress(contractAddress),
 	}, nil
 }
 
@@ -130,9 +132,18 @@ func (d *DittoEntryPoint) GetAllActiveWorkflows(ctx context.Context) ([]models.W
 func (d *DittoEntryPoint) RunWorkflow(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (
 	*types.Transaction, error,
 ) {
+	gasPrice, err := d.client.SuggestGasPrice(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("get gas price: %w", err)
+	}
+
+	log.With(log.String("gas_price", gasPrice.String())).Info("suggested gas price")
+
 	tx, err := d.dep.RunWorkflowWithoutRevert(&bind.TransactOpts{
-		Context: ctx,
-		NoSend:  true,
+		Context:  ctx,
+		NoSend:   true,
+		From:     d.contractAddr,
+		GasPrice: gasPrice,
 	}, vaultAddr, workflowID)
 	if err != nil {
 		return nil, fmt.Errorf("call runWorkflowWithoutRevert: %w", err)

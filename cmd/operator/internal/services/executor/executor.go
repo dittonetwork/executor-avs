@@ -66,6 +66,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	wg.Add(len(workflows))
 
 	executableWorkflows := make([]models.Workflow, 0, len(workflows))
+	var mu *sync.Mutex
 
 	for _, workflow := range workflows {
 		log.With(
@@ -73,19 +74,23 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 			log.String("workflow_id", workflow.WorkflowID.String()),
 		).Info("active workflow")
 
-		go func(workflow models.Workflow) {
+		go func(mu *sync.Mutex, workflow models.Workflow) {
 			defer wg.Done()
 
 			var canRun bool
 			canRun, err = r.Simulate(ctx, workflow, block.Number())
 			if err != nil {
-				errCh <- fmt.Errorf("simulate workflow: %w", err)
+				errCh <- fmt.Errorf("simulate workflow %d: %w", workflow.WorkflowID.Int64(), err)
 			}
 
 			if canRun {
+				log.With(log.String("workflow_id", workflow.WorkflowID.String())).Info("workflow is executable")
+
+				mu.Lock()
 				executableWorkflows = append(executableWorkflows, workflow)
+				mu.Unlock()
 			}
-		}(workflow)
+		}(mu, workflow)
 	}
 
 	wg.Wait()
