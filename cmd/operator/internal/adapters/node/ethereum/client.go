@@ -62,7 +62,7 @@ func (c *Client) SimulateTransaction(
 		return fmt.Errorf("call eth_call: %w", err)
 	}
 
-	log.With(log.Any("result", result)).Debug("simulate transfer debug log")
+	log.With(log.Any("result", result)).Debug("simulate transaction done")
 
 	return nil
 }

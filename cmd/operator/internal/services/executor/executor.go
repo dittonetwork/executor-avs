@@ -64,17 +64,18 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	errCh := make(chan error, len(workflows))
 	wg.Add(len(workflows))
 
-	for _, workflow := range workflows {
+	for i := range workflows {
+		workflow := &workflows[i]
 		log.With(
 			log.String("vault_addr", workflow.VaultAddress.String()),
 			log.String("workflow_id", workflow.WorkflowID.String()),
 		).Debug("active workflow")
 
-		go func(workflow models.Workflow) {
+		go func(workflow *models.Workflow) {
 			defer wg.Done()
 
 			var canRun bool
-			canRun, err = r.Simulate(ctx, workflow, block.Number())
+			canRun, err = r.Simulate(ctx, *workflow, block.Number())
 			if err != nil {
 				errCh <- fmt.Errorf("simulate workflow %d: %w", workflow.WorkflowID.Int64(), err)
 				return
