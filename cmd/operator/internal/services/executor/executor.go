@@ -51,8 +51,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	}
 
 	if !isValidExecutor {
-		log.Info("isValidExecutor is false")
-
+		log.Info("Not my turn to execute")
 		return nil
 	}
 
@@ -69,7 +68,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 		log.With(
 			log.String("vault_addr", workflow.VaultAddress.String()),
 			log.String("workflow_id", workflow.WorkflowID.String()),
-		).Info("active workflow")
+		).Debug("active workflow")
 
 		go func(workflow models.Workflow) {
 			defer wg.Done()
@@ -98,6 +97,11 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 		if workflow.CouldBeExecuted {
 			executableWorkflows = append(executableWorkflows, workflow)
 		}
+	}
+
+	if len(executableWorkflows) == 0 {
+		log.Info("Nothing to execute")
+		return nil
 	}
 
 	if err = r.ExecuteWorkflows(ctx, executableWorkflows); err != nil {
