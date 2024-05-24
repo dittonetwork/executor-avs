@@ -107,10 +107,6 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	return nil
 }
 
-type WorkflowSimulationResponse struct {
-	Result string `json:"result"`
-}
-
 func hexStringToBool(hexStr string) (bool, error) {
 	value := new(big.Int)
 	_, isSuccess := value.SetString(hexStr, 0)
