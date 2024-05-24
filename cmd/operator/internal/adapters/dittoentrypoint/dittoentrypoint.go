@@ -132,9 +132,10 @@ func (d *DittoEntryPoint) GetAllActiveWorkflows(ctx context.Context) ([]models.W
 func (d *DittoEntryPoint) GetRunWorkflowTx(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (
 	*types.Transaction, error,
 ) {
-	// TODO: figure out what is StorageTransactor (https://geth.ethereum.org/docs/developers/dapp-developer/native-bindings)
-	//   and do we need it (auth.Signer, auth.From)
-	dummySigner := func(from common.Address, tx *types.Transaction) (*types.Transaction, error) {
+	// TODO: figure out what is StorageTransactor
+	// https://geth.ethereum.org/docs/developers/dapp-developer/native-bindings)
+	// and do we need it (auth.Signer, auth.From)
+	dummySigner := func(_ common.Address, tx *types.Transaction) (*types.Transaction, error) {
 		return tx, nil
 	}
 	tx, err := d.dep.RunWorkflowWithoutRevert(&bind.TransactOpts{

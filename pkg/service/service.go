@@ -10,6 +10,8 @@ import (
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )
 
+const signalAmount = 2
+
 type Service struct {
 	appName         string
 	diagnosticsAddr string
@@ -82,7 +84,7 @@ func RunWait(services ...StartStopper) *sync.WaitGroup {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	signals := make(chan os.Signal, 2)
+	signals := make(chan os.Signal, signalAmount)
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
 
 	go func() {

@@ -49,7 +49,9 @@ func (c *Client) BlockByHash(ctx context.Context, hash common.Hash) (*types.Bloc
 	return c.client.BlockByHash(ctx, hash)
 }
 
-func (c *Client) SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int, result interface{}) error {
+func (c *Client) SimulateTransaction(
+	ctx context.Context, tx *types.Transaction, blockNum *big.Int, result interface{},
+) error {
 	err := c.client.Client().CallContext(ctx, &result, "eth_call", map[string]interface{}{
 		"from":  crypto.PubkeyToAddress(c.privateKey.PublicKey),
 		"to":    common.HexToAddress(c.contractAddr),

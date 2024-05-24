@@ -136,7 +136,7 @@ func (r *Executor) Simulate(ctx context.Context, workflow models.Workflow, block
 
 	isSuccess, err := hexStringToBool(resp)
 	if err != nil {
-		return false, fmt.Errorf("rror interpreting result: %s", err)
+		return false, fmt.Errorf("interpreting result: %w", err)
 	}
 	log.With(
 		log.Bool("result", isSuccess),
