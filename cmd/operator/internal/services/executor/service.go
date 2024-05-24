@@ -15,6 +15,7 @@ import (
 	"github.com/dittonetwork/executor-avs/pkg/service"
 )
 
+//go:generate mockery --name EthereumClient --output ./mocks --outpkg mocks
 type EthereumClient interface {
 	SubscribeNewHead(ctx context.Context) (chan *types.Header, ethereum.Subscription, error)
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
@@ -22,6 +23,7 @@ type EthereumClient interface {
 	SendTransaction(ctx context.Context, tx *types.Transaction) error
 }
 
+//go:generate mockery --name DittoEntryPoint --output ./mocks --outpkg mocks
 type DittoEntryPoint interface {
 	GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error)
 	UnregisterExecutor(ctx context.Context) error
@@ -83,7 +85,7 @@ func (s *Service) start() {
 				continue
 			}
 
-			if err = s.HandleBlock(ctx, block); err != nil {
+			if err = s.executor.Handle(ctx, block.Number()); err != nil {
 				log.With(log.Err(err)).Error("handle block")
 			}
 		}
@@ -108,7 +110,7 @@ func (s *Service) HandleBlock(ctx context.Context, block *types.Block) error {
 		return nil
 	}
 
-	if err = s.executor.Handle(ctx, block); err != nil {
+	if err = s.executor.Handle(ctx, block.Number()); err != nil {
 		return fmt.Errorf("executor handle: %w", err)
 	}
 

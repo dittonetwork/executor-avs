@@ -7,8 +7,6 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )
@@ -30,8 +28,8 @@ func NewExecutor(client EthereumClient, entryPoint DittoEntryPoint) *Executor {
 	}
 }
 
-func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
-	if block == nil {
+func (r *Executor) Handle(ctx context.Context, blockNumber *big.Int) error {
+	if blockNumber == nil {
 		return ErrBlockIsNil
 	}
 
@@ -45,7 +43,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 	}
 
 	var isValidExecutor bool
-	isValidExecutor, err = r.entryPoint.IsValidExecutor(ctx, block.Number())
+	isValidExecutor, err = r.entryPoint.IsValidExecutor(ctx, blockNumber)
 	if err != nil {
 		return fmt.Errorf("check if executor is valid: %w", err)
 	}
@@ -75,7 +73,7 @@ func (r *Executor) Handle(ctx context.Context, block *types.Block) error {
 			defer wg.Done()
 
 			var canRun bool
-			canRun, err = r.Simulate(ctx, *workflow, block.Number())
+			canRun, err = r.Simulate(ctx, *workflow, blockNumber)
 			if err != nil {
 				errCh <- fmt.Errorf("simulate workflow %d: %w", workflow.WorkflowID.Int64(), err)
 				return
