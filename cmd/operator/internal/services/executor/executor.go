@@ -151,6 +151,8 @@ func (r *Executor) ExecuteWorkflows(ctx context.Context, workflows []models.Work
 		return fmt.Errorf("send transaction: %w", err)
 	}
 
+	log.With(log.String("tx_hash", tx.Hash().String())).Info("run multiple workflows")
+
 	return nil
 }
 

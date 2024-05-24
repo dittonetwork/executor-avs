@@ -68,12 +68,12 @@ func (c *Client) SimulateTransaction(
 }
 
 func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) error {
-	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(tx.ChainId()), c.privateKey)
-	if err != nil {
-		return fmt.Errorf("sign tx: %w", err)
-	}
+	// signedTx, err := types.SignTx(tx, types.NewEIP155Signer(tx.ChainId()), c.privateKey)
+	// if err != nil {
+	// 	return fmt.Errorf("sign tx: %w", err)
+	// }
 
-	if err = c.client.SendTransaction(ctx, signedTx); err != nil {
+	if err := c.client.SendTransaction(ctx, tx); err != nil {
 		return fmt.Errorf("send tx: %w", err)
 	}
 

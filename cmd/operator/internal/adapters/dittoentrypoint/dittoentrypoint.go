@@ -164,9 +164,12 @@ func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context, workflows []
 		})
 	}
 
-	tx, err := d.dep.RunMultipleWorkflows(&bind.TransactOpts{
-		Context: ctx,
-	}, wfs)
+	opts, err := d.makeTransacOpts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("make transac opts: %w", err)
+	}
+
+	tx, err := d.dep.RunMultipleWorkflows(opts, wfs)
 	if err != nil {
 		return nil, fmt.Errorf("call runMultipleWorkflows: %w", err)
 	}
