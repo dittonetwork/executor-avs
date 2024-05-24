@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
@@ -58,10 +59,9 @@ func (s *Service) Start() {
 	go s.start()
 }
 func (s *Service) start() {
-	log.Info("starting executor")
-
 	ctx := context.Background()
 
+	log.Info("starting executor")
 	s.status = api.ServiceStatusTypeActive
 
 	headers, sub, err := s.client.SubscribeNewHead(ctx)
@@ -75,6 +75,7 @@ func (s *Service) start() {
 			log.With(log.Err(err)).Error("subscription error")
 		case header := <-headers:
 			var block *types.Block
+
 			block, err = s.client.BlockByHash(ctx, header.Hash())
 			if err != nil {
 				log.With(log.Err(err)).Error("get block by hash")
@@ -82,33 +83,36 @@ func (s *Service) start() {
 				continue
 			}
 
-			log.With(log.Int64("block_number", block.Number().Int64())).Info("checking if it is executor...")
-
-			var isExecutor bool
-			isExecutor, err = s.executor.CheckIsExecutor(ctx)
-			if err != nil {
-				log.With(log.Err(err)).Error("checking is executor error")
-
-				continue
-			}
-
-			if !isExecutor {
-				log.Info("not executor ❌")
-
-				if s.isShuttingDown {
-					s.done <- struct{}{}
-
-					return
-				}
-
-				continue
-			}
-
-			if err = s.executor.Handle(ctx, block); err != nil {
+			if err = s.HandleBlock(ctx, block); err != nil {
 				log.With(log.Err(err)).Error("handle block")
 			}
 		}
 	}
+}
+
+func (s *Service) HandleBlock(ctx context.Context, block *types.Block) error {
+	log.With(log.Int64("block_number", block.Number().Int64())).Info("checking if it is executor...")
+
+	isExecutor, err := s.executor.CheckIsExecutor(ctx)
+	if err != nil {
+		return fmt.Errorf("check if is executor: %w", err)
+	}
+
+	if !isExecutor {
+		log.Info("not executor ❌")
+
+		if s.isShuttingDown {
+			s.done <- struct{}{}
+		}
+
+		return nil
+	}
+
+	if err = s.executor.Handle(ctx, block); err != nil {
+		return fmt.Errorf("executor handle: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) Stop() {
