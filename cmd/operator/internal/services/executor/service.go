@@ -26,8 +26,7 @@ type EthereumClient interface {
 //go:generate mockery --name DittoEntryPoint --output ./mocks --outpkg mocks
 type DittoEntryPoint interface {
 	GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error)
-	UnregisterExecutor(ctx context.Context) error
-	ArrangeExecutors(ctx context.Context) error
+
 	IsExecutor(ctx context.Context) (bool, error)
 	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
 	GetRunWorkflowTx(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (*types.Transaction, error)
