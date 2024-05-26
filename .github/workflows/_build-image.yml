@@ -12,12 +12,22 @@ jobs:
   build-image:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
       - name: Build image
-        env:
-          APP: ${{ inputs.APP }}
-          CI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCKER_BUILDKIT: 1
-        run: |
-          docker build --secret id=CI_GITHUB_TOKEN --build-arg APP=$APP .
+        uses: docker/build-push-action@v5
+        with:
+          tags: ditto-operator-avs:latest
+          load: true # Loads the image into Docker daemon
+          build-args: |
+            APP=${{ inputs.APP }}
+          secrets: |
+            CI_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save Docker image
+        run: docker save ditto-operator-avs:latest | gzip > image.tar.gz
+
+      # To load run `gunzip -c image.tar.gz | docker load`
+      - name: Upload Docker image as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image
+          path: image.tar.gz
