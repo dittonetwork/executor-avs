@@ -1,5 +1,5 @@
 # Checkout repo and build a docker image.
-# This action does not push any tags to the git repo, 
+# This action does not push any tags to the git repo,
 # it doesn't push the built image to ecr.
 # This action is just to verify that image can be built with changes,
 # proposed in a PR.
@@ -8,7 +8,8 @@ name: Verify Images Build
 on:
   pull_request:
     branches:
-      - 'master'
+      # - 'master'
+  workflow_dispatch:
 
 permissions:
   id-token: write

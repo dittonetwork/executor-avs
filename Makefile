@@ -6,6 +6,26 @@ OPERATOR := operator
 GOBASE := $(shell pwd)
 GOBIN := $(GOBASE)/bin
 
+GOOS := $(shell go env GOOS)
+GOARCH := $(shell go env GOARCH)
+
+BUILD_MODE?=debug
+ifeq ($(BUILD_MODE),debug)
+	BUILD_FLAGS := -gcflags="all=-N -l"
+	CGO_ENABLED := 1
+else
+	BUILD_FLAGS := -ldflags="-s -w"
+	CGO_ENABLED := 0
+endif
+
+# ------------------------------------------------------------------------------
+# Functions
+# ------------------------------------------------------------------------------
+define go_build
+@echo " > Building $(1) in $(BUILD_MODE) mode..."
+@CGO_ENABLED=$(CGO_ENABLED) GOBIN=$(GOBIN) GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(BUILD_FLAGS) -o ./bin/$(1) ./cmd/$(1)
+endef
+
 # ------------------------------------------------------------------------------
 # Operator
 # ------------------------------------------------------------------------------
@@ -14,8 +34,7 @@ operator: go-build-operator go-run-operator
 
 .PHONY: go-build-operator
 go-build-operator:
-	@echo " > Building $(OPERATOR) binary"
-	GOBIN=$(GOBIN) go build -o ./bin/$(OPERATOR) ./cmd/$(OPERATOR)
+	$(call go_build,$(OPERATOR))
 
 .PHONY: go-run-operator
 go-run-operator:
@@ -26,9 +45,7 @@ go-run-operator:
 # Code check
 # ------------------------------------------------------------------------------
 .PHONY: build
-build:
-	@echo "  >  Building $(OPERATOR) binary..."
-	go build -o ./bin/$(OPERATOR) ./cmd/$(OPERATOR)
+build: go-build-operator
 
 .PHONY: unit-tests
 unit-tests:

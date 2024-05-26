@@ -12,14 +12,12 @@ COPY go.sum .
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/app ./cmd/$APP
+RUN make go-build-$APP BUILD_MODE=release
 
 FROM alpine:latest
 
-ARG APP
-
 RUN apk add --no-cache tzdata && apk --no-cache add ca-certificates
 
-COPY --from=builder /app/bin/app /bin/app
+COPY --from=builder /app/bin/$APP /bin/app
 
 ENTRYPOINT ["/bin/app"]
