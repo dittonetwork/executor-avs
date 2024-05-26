@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func RegisterExecutor() {
-	dep, err := initDittoEntryPoint()
+func RegisterExecutor(cfg *CommonFlags) {
+	dep, err := initDittoEntryPoint(cfg)
 	if err != nil {
 		log.With(log.Err(err)).Fatal("ditto entrypoint init error")
 	}
@@ -20,8 +20,8 @@ func RegisterExecutor() {
 	}
 }
 
-func UnregisterExecutor() {
-	dep, err := initDittoEntryPoint()
+func UnregisterExecutor(cfg *CommonFlags) {
+	dep, err := initDittoEntryPoint(cfg)
 	if err != nil {
 		log.With(log.Err(err)).Fatal("ditto entrypoint init error")
 	}
@@ -31,8 +31,8 @@ func UnregisterExecutor() {
 	}
 }
 
-func ArrangeExecutors() {
-	dep, err := initDittoEntryPoint()
+func ArrangeExecutors(cfg *CommonFlags) {
+	dep, err := initDittoEntryPoint(cfg)
 	if err != nil {
 		log.With(log.Err(err)).Fatal("ditto entrypoint init error")
 	}
@@ -50,13 +50,13 @@ func ArrangeExecutors() {
 	}
 }
 
-func initDittoEntryPoint() (*dittoentrypoint.DittoEntryPoint, error) {
-	conn, err := ethclient.Dial(nodeURL)
+func initDittoEntryPoint(cfg *CommonFlags) (*dittoentrypoint.DittoEntryPoint, error) {
+	conn, err := ethclient.Dial(cfg.NodeURL)
 	if err != nil {
 		return nil, fmt.Errorf("ethereum client dial: %w", err)
 	}
 
-	entryPoint, err := dittoentrypoint.New(conn, contractAddress, privateKey)
+	entryPoint, err := dittoentrypoint.New(conn, cfg.ContractAddress, cfg.PrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("dittoentrypoint client init: %w", err)
 	}
