@@ -34,21 +34,21 @@ func initRunFlags(cmd *cobra.Command) {
 	cmd.Flags().DurationVar(&shutdownTimeout, "shutdown-timeout", defaultShutdownTimeout, "Graceful shutdown timeout")
 }
 
-func Run() *sync.WaitGroup {
+func Run(cfg *CommonFlags) *sync.WaitGroup {
 	service.Init(appName, env, service.WithDiagnosticsServer(diagnosticsAddr))
 
 	// adapters
-	conn, err := ethclient.Dial(nodeURL)
+	conn, err := ethclient.Dial(cfg.NodeURL)
 	if err != nil {
 		log.With(log.Err(err)).Fatal("ether client dial error")
 	}
 
-	ethClient, err := ethereum.NewClient(conn, contractAddress, privateKey)
+	ethClient, err := ethereum.NewClient(conn, cfg.ContractAddress, cfg.PrivateKey)
 	if err != nil {
 		log.With(log.Err(err)).Fatal("ethereum client init error")
 	}
 
-	entryPoint, err := dittoentrypoint.New(conn, contractAddress, privateKey)
+	entryPoint, err := dittoentrypoint.New(conn, cfg.ContractAddress, cfg.PrivateKey)
 	if err != nil {
 		log.With(log.Err(err)).Fatal("dittoentrypoint init error")
 	}
