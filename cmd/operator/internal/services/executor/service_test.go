@@ -1,3 +1,4 @@
+//nolint:testpackage // it's necessary to use the unexported fields for testing
 package executor
 
 import (
