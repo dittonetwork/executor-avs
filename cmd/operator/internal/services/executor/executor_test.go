@@ -1,4 +1,4 @@
-package executor
+package executor_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
+	"github.com/dittonetwork/executor-avs/cmd/operator/internal/services/executor"
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/services/executor/mocks"
 )
 
@@ -21,6 +22,8 @@ func TestExecutor_Handle(t *testing.T) {
 	ctx := context.Background()
 	nonce := uint64(1)
 	blockNum := big.NewInt(1)
+	block := types.NewBlock(&types.Header{Number: blockNum}, nil, nil, nil)
+	blockHash := common.HexToHash("0x1")
 	contractAddr := common.HexToAddress("0x123")
 	data := []byte("data")
 	tx := types.NewTransaction(nonce, contractAddr, big.NewInt(0), 0, big.NewInt(0), data)
@@ -36,15 +39,10 @@ func TestExecutor_Handle(t *testing.T) {
 		client     ethereumClientMockBuilder
 		entryPoint dittoEntryPointMockBuilder
 	}
-	type args struct {
-		ctx      context.Context
-		blockNum *big.Int
-	}
 
 	tests := []struct {
 		name        string
 		fields      fields
-		args        args
 		wantErr     bool
 		expectedErr error
 	}{
@@ -65,13 +63,13 @@ func TestExecutor_Handle(t *testing.T) {
 				},
 				client: func(t *testing.T) *mocks.EthereumClient {
 					m := mocks.NewEthereumClient(t)
+					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
 					m.EXPECT().SimulateTransaction(ctx, wfSimulatedTx1, blockNum).Return(result, nil)
 					m.EXPECT().SimulateTransaction(ctx, wfSimulatedTx2, blockNum).Return(result, nil)
 					m.EXPECT().SendTransaction(ctx, tx).Return(nil)
 					return m
 				},
 			},
-			args:    args{ctx: ctx, blockNum: blockNum},
 			wantErr: false,
 		},
 		{
@@ -82,11 +80,14 @@ func TestExecutor_Handle(t *testing.T) {
 					m.EXPECT().IsExecutor(ctx).Return(false, nil)
 					return m
 				},
-				client: func(t *testing.T) *mocks.EthereumClient { return mocks.NewEthereumClient(t) },
+				client: func(t *testing.T) *mocks.EthereumClient {
+					m := mocks.NewEthereumClient(t)
+					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
+					return m
+				},
 			},
-			args:        args{ctx: ctx, blockNum: blockNum},
 			wantErr:     true,
-			expectedErr: ErrUnregisteredExecutor,
+			expectedErr: executor.ErrUnregisteredExecutor,
 		},
 		{
 			name: "Return on IsValidExecutor=false",
@@ -97,9 +98,12 @@ func TestExecutor_Handle(t *testing.T) {
 					m.EXPECT().IsValidExecutor(ctx, blockNum).Return(false, nil)
 					return m
 				},
-				client: func(t *testing.T) *mocks.EthereumClient { return mocks.NewEthereumClient(t) },
+				client: func(t *testing.T) *mocks.EthereumClient {
+					m := mocks.NewEthereumClient(t)
+					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
+					return m
+				},
 			},
-			args:    args{ctx: ctx, blockNum: blockNum},
 			wantErr: false,
 		},
 		{
@@ -119,24 +123,24 @@ func TestExecutor_Handle(t *testing.T) {
 				},
 				client: func(t *testing.T) *mocks.EthereumClient {
 					m := mocks.NewEthereumClient(t)
+					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
 					m.EXPECT().SimulateTransaction(ctx, wfSimulatedTx1, blockNum).Return(result, nil)
 					m.EXPECT().SimulateTransaction(ctx, wfSimulatedTx2, blockNum).Return("0x0", nil)
 					m.EXPECT().SendTransaction(ctx, tx).Return(nil)
 					return m
 				},
 			},
-			args:    args{ctx: ctx, blockNum: blockNum},
 			wantErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &Executor{
-				client:     tt.fields.client(t),
-				entryPoint: tt.fields.entryPoint(t),
+			r := &executor.Executor{
+				Client:     tt.fields.client(t),
+				EntryPoint: tt.fields.entryPoint(t),
 			}
-			if err := r.Handle(tt.args.ctx, tt.args.blockNum); (err != nil) != tt.wantErr {
+			if err := r.Handle(ctx, blockHash); (err != nil) != tt.wantErr {
 				assert.Equal(t, tt.expectedErr, err)
 			}
 		})
