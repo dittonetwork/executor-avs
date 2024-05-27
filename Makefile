@@ -34,7 +34,7 @@ build:
 unit-tests:
 	@echo "  >  Running unit tests"
 	go clean -testcache
-	go test -coverprofile=coverage -cover -v ./internal... ./pkg...
+	go test -coverprofile=coverage -cover -v ./cmd... ./internal... ./pkg...
 
 .PHONY: unit-tests-coverage
 unit-tests-coverage: unit-tests

@@ -19,7 +19,7 @@ import (
 type EthereumClient interface {
 	SubscribeNewHead(ctx context.Context) (chan *types.Header, ethereum.Subscription, error)
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
-	SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int, result interface{}) error
+	SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (string, error)
 	SendTransaction(ctx context.Context, tx *types.Transaction) error
 }
 

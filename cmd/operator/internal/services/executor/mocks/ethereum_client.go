@@ -134,22 +134,32 @@ func (_c *EthereumClient_SendTransaction_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
-// SimulateTransaction provides a mock function with given fields: ctx, tx, blockNum, result
-func (_m *EthereumClient) SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int, result interface{}) error {
-	ret := _m.Called(ctx, tx, blockNum, result)
+// SimulateTransaction provides a mock function with given fields: ctx, tx, blockNum
+func (_m *EthereumClient) SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (string, error) {
+	ret := _m.Called(ctx, tx, blockNum)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SimulateTransaction")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *types.Transaction, *big.Int, interface{}) error); ok {
-		r0 = rf(ctx, tx, blockNum, result)
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *types.Transaction, *big.Int) (string, error)); ok {
+		return rf(ctx, tx, blockNum)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *types.Transaction, *big.Int) string); ok {
+		r0 = rf(ctx, tx, blockNum)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, *types.Transaction, *big.Int) error); ok {
+		r1 = rf(ctx, tx, blockNum)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // EthereumClient_SimulateTransaction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SimulateTransaction'
@@ -161,24 +171,23 @@ type EthereumClient_SimulateTransaction_Call struct {
 //   - ctx context.Context
 //   - tx *types.Transaction
 //   - blockNum *big.Int
-//   - result interface{}
-func (_e *EthereumClient_Expecter) SimulateTransaction(ctx interface{}, tx interface{}, blockNum interface{}, result interface{}) *EthereumClient_SimulateTransaction_Call {
-	return &EthereumClient_SimulateTransaction_Call{Call: _e.mock.On("SimulateTransaction", ctx, tx, blockNum, result)}
+func (_e *EthereumClient_Expecter) SimulateTransaction(ctx interface{}, tx interface{}, blockNum interface{}) *EthereumClient_SimulateTransaction_Call {
+	return &EthereumClient_SimulateTransaction_Call{Call: _e.mock.On("SimulateTransaction", ctx, tx, blockNum)}
 }
 
-func (_c *EthereumClient_SimulateTransaction_Call) Run(run func(ctx context.Context, tx *types.Transaction, blockNum *big.Int, result interface{})) *EthereumClient_SimulateTransaction_Call {
+func (_c *EthereumClient_SimulateTransaction_Call) Run(run func(ctx context.Context, tx *types.Transaction, blockNum *big.Int)) *EthereumClient_SimulateTransaction_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*types.Transaction), args[2].(*big.Int), args[3].(interface{}))
+		run(args[0].(context.Context), args[1].(*types.Transaction), args[2].(*big.Int))
 	})
 	return _c
 }
 
-func (_c *EthereumClient_SimulateTransaction_Call) Return(_a0 error) *EthereumClient_SimulateTransaction_Call {
-	_c.Call.Return(_a0)
+func (_c *EthereumClient_SimulateTransaction_Call) Return(_a0 string, _a1 error) *EthereumClient_SimulateTransaction_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *EthereumClient_SimulateTransaction_Call) RunAndReturn(run func(context.Context, *types.Transaction, *big.Int, interface{}) error) *EthereumClient_SimulateTransaction_Call {
+func (_c *EthereumClient_SimulateTransaction_Call) RunAndReturn(run func(context.Context, *types.Transaction, *big.Int) (string, error)) *EthereumClient_SimulateTransaction_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -128,7 +128,7 @@ func (r *Executor) Simulate(ctx context.Context, workflow models.Workflow, block
 	}
 
 	var resp string
-	err = r.client.SimulateTransaction(ctx, tx, blockNum, &resp)
+	resp, err = r.client.SimulateTransaction(ctx, tx, blockNum)
 	if err != nil {
 		return false, fmt.Errorf("simulate transaction: %w", err)
 	}

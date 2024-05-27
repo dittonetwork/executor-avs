@@ -50,29 +50,24 @@ func (c *Client) BlockByHash(ctx context.Context, hash common.Hash) (*types.Bloc
 }
 
 func (c *Client) SimulateTransaction(
-	ctx context.Context, tx *types.Transaction, blockNum *big.Int, result interface{},
-) error {
-	err := c.client.Client().CallContext(ctx, &result, "eth_call", map[string]interface{}{
+	ctx context.Context, tx *types.Transaction, blockNum *big.Int) (string, error) {
+	var result string
+
+	if err := c.client.Client().CallContext(ctx, &result, "eth_call", map[string]interface{}{
 		"from":  crypto.PubkeyToAddress(c.privateKey.PublicKey),
 		"to":    common.HexToAddress(c.contractAddr),
 		"data":  hexutil.Encode(tx.Data()),
 		"block": blockNum.Int64(),
-	})
-	if err != nil {
-		return fmt.Errorf("call eth_call: %w", err)
+	}); err != nil {
+		return "", fmt.Errorf("call eth_call: %w", err)
 	}
 
 	log.With(log.Any("result", result)).Debug("simulate transaction done")
 
-	return nil
+	return result, nil
 }
 
 func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) error {
-	// signedTx, err := types.SignTx(tx, types.NewEIP155Signer(tx.ChainId()), c.privateKey)
-	// if err != nil {
-	// 	return fmt.Errorf("sign tx: %w", err)
-	// }
-
 	if err := c.client.SendTransaction(ctx, tx); err != nil {
 		return fmt.Errorf("send tx: %w", err)
 	}
