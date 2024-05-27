@@ -37,6 +37,22 @@ func NewService(executorHandler executor) *Service {
 	}
 }
 
+func (s *Service) GetName() string {
+	return ""
+}
+
+func (s *Service) GetID() string {
+	return ""
+}
+
+func (s *Service) GetDescription() string {
+	return ""
+}
+
+func (s *Service) GetStatus() api.ServiceStatusType {
+	return s.status
+}
+
 func (s *Service) Start() {
 	go s.start()
 }
@@ -81,9 +97,8 @@ func (s *Service) Stop() {
 	log.Info("stopping the executor service...")
 
 	s.isShuttingDown = true
-	s.status = api.ServiceStatusTypeDown
-
 	<-s.done
+	s.status = api.ServiceStatusTypeDown
 
 	log.Info("executor is stopped 🫡")
 }
