@@ -2,57 +2,55 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
 	api "github.com/dittonetwork/executor-avs/api/operator"
-	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 	"github.com/dittonetwork/executor-avs/pkg/service"
 )
 
-type EthereumClient interface {
-	SubscribeNewHead(ctx context.Context) (chan *types.Header, ethereum.Subscription, error)
-	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
-	SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int, result interface{}) error
-	SendTransaction(ctx context.Context, tx *types.Transaction) error
-}
-
-type DittoEntryPoint interface {
-	GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error)
-	UnregisterExecutor(ctx context.Context) error
-	ArrangeExecutors(ctx context.Context) error
-	IsExecutor(ctx context.Context) (bool, error)
-	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
-	GetRunWorkflowTx(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (*types.Transaction, error)
-	RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow) (*types.Transaction, error)
+//go:generate mockery --name executor --output ./mocks --outpkg mocks
+type executor interface {
+	SubscribeToNewBlocks(ctx context.Context) (chan *types.Header, ethereum.Subscription, error)
+	Handle(ctx context.Context, blockHash common.Hash) error
 }
 
 type Service struct {
-	executor   *Executor
-	client     EthereumClient
-	entryPoint DittoEntryPoint
-	status     api.ServiceStatusType
+	executor executor
 
+	status         api.ServiceStatusType
 	isShuttingDown bool
 	done           chan struct{}
 }
 
-func NewService(client EthereumClient, entryPoint DittoEntryPoint) *Service {
-	executor := NewExecutor(client, entryPoint)
-
+func NewService(executorHandler executor) *Service {
 	return &Service{
-		executor:       executor,
-		client:         client,
-		entryPoint:     entryPoint,
+		executor:       executorHandler,
 		status:         api.ServiceStatusTypeDown,
 		isShuttingDown: false,
 		done:           make(chan struct{}),
 	}
+}
+
+func (s *Service) GetName() string {
+	return ""
+}
+
+func (s *Service) GetID() string {
+	return ""
+}
+
+func (s *Service) GetDescription() string {
+	return ""
+}
+
+func (s *Service) GetStatus() api.ServiceStatusType {
+	return s.status
 }
 
 func (s *Service) Start() {
@@ -64,52 +62,32 @@ func (s *Service) start() {
 	log.Info("starting executor")
 	s.status = api.ServiceStatusTypeActive
 
-	headers, sub, err := s.client.SubscribeNewHead(ctx)
+	blocks, sub, err := s.executor.SubscribeToNewBlocks(ctx)
 	if err != nil {
-		log.With(log.Err(err)).Fatal("subscribe new head")
+		log.With(log.Err(err)).Fatal("subscribe to new blocks")
 	}
 
 	for {
 		select {
 		case err = <-sub.Err():
 			log.With(log.Err(err)).Error("subscription error")
-		case header := <-headers:
-			var block *types.Block
-
-			block, err = s.client.BlockByHash(ctx, header.Hash())
-			if err != nil {
-				log.With(log.Err(err)).Error("get block by hash")
-
-				continue
-			}
-
-			if err = s.HandleBlock(ctx, block); err != nil {
+		case block := <-blocks:
+			if err = s.executor.Handle(ctx, block.Hash()); err != nil {
 				log.With(log.Err(err)).Error("handle block")
 			}
 		}
 	}
 }
 
-func (s *Service) HandleBlock(ctx context.Context, block *types.Block) error {
-	log.With(log.Int64("block_number", block.Number().Int64())).Info("checking if it is executor...")
-
-	isExecutor, err := s.executor.CheckIsExecutor(ctx)
-	if err != nil {
-		return fmt.Errorf("check if is executor: %w", err)
-	}
-
-	if !isExecutor {
-		log.Info("not executor ❌")
-
-		if s.isShuttingDown {
-			s.done <- struct{}{}
+func (s *Service) HandleBlock(ctx context.Context, blockHash common.Hash) error {
+	if err := s.executor.Handle(ctx, blockHash); err != nil {
+		if errors.Is(err, ErrUnregisteredExecutor) {
+			if s.isShuttingDown {
+				s.done <- struct{}{}
+			}
+		} else {
+			return fmt.Errorf("executor handle: %w", err)
 		}
-
-		return nil
-	}
-
-	if err = s.executor.Handle(ctx, block); err != nil {
-		return fmt.Errorf("executor handle: %w", err)
 	}
 
 	return nil
@@ -119,9 +97,8 @@ func (s *Service) Stop() {
 	log.Info("stopping the executor service...")
 
 	s.isShuttingDown = true
-	s.status = api.ServiceStatusTypeDown
-
 	<-s.done
+	s.status = api.ServiceStatusTypeDown
 
 	log.Info("executor is stopped 🫡")
 }
