@@ -60,7 +60,7 @@ dbdec637814f        prom/prometheus     "/bin/prometheus --c…"   8 minutes ago
 
 Navigate to `http://localhost:3000` in your web browser and use the login credentials specified in the compose file to access Grafana. It is already configured with prometheus as the default datasource.
 
-![page](output.jpg)
+![page](output.png)
 
 Navigate to `http://localhost:9090` in your web browser to access directly the web interface of prometheus.
 

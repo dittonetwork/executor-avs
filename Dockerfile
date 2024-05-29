@@ -7,14 +7,15 @@ RUN --mount=type=secret,id=CI_GITHUB_TOKEN \
     git config --global url.https://ci:${CI_GITHUB_TOKEN}@github.com/.insteadOf https://github.com/ || true
 
 WORKDIR /app
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
 
 COPY . .
+
+RUN go mod download
 RUN make go-build-$APP BUILD_MODE=release
 
 FROM alpine:latest
+
+ARG APP
 
 RUN apk add --no-cache tzdata && apk --no-cache add ca-certificates
 
