@@ -25,6 +25,7 @@ type ethereumClient interface {
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
 	SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (string, error)
 	SendTransaction(ctx context.Context, tx *types.Transaction) error
+	GetBalance(ctx context.Context) (*big.Int, error)
 }
 
 //go:generate mockery --name dittoEntryPoint --output ./mocks --outpkg mocks
@@ -39,13 +40,31 @@ type dittoEntryPoint interface {
 type Executor struct {
 	Client     ethereumClient
 	EntryPoint dittoEntryPoint
+
+	metrics *Metrics
 }
 
-func NewExecutor(client ethereumClient, entryPoint dittoEntryPoint) *Executor {
-	return &Executor{
+type Options func(*Executor)
+
+func WithMetrics() Options {
+	return func(e *Executor) {
+		e.metrics.Register()
+		go e.metrics.CollectBackgroundMetrics(e.Client)
+	}
+}
+
+func NewExecutor(client ethereumClient, entryPoint dittoEntryPoint, opts ...Options) *Executor {
+	e := &Executor{
 		Client:     client,
 		EntryPoint: entryPoint,
+		metrics:    NewMetrics(),
 	}
+
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	return e
 }
 
 func (r *Executor) SubscribeToNewBlocks(ctx context.Context) (chan *types.Header, ethereum.Subscription, error) {
@@ -101,6 +120,8 @@ func (r *Executor) Handle(ctx context.Context, blockHash common.Hash) error {
 	if err = r.executeWorkflows(ctx, executableWorkflows); err != nil {
 		return fmt.Errorf("execute workflows: %w", err)
 	}
+
+	r.metrics.CountExecutedWorkflowsAmountTotal(len(executableWorkflows))
 
 	return nil
 }
@@ -198,6 +219,12 @@ func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Work
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().String())).Info("run multiple workflows")
+
+	log.With(log.Uint64("gas_used", tx.Gas())).Debug("gas used")
+	log.With(log.Uint64("gas_price", tx.GasPrice().Uint64())).Debug("gas price")
+	log.With(log.Uint64("native amount", tx.Gas()*tx.GasPrice().Uint64())).Debug("native spent")
+
+	r.metrics.CountNativeTokenSpentAmountTotal(tx.Gas() * tx.GasPrice().Uint64())
 
 	return nil
 }

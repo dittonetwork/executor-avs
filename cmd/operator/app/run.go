@@ -54,7 +54,7 @@ func Run(cfg *CommonFlags) *sync.WaitGroup {
 	}
 
 	// services
-	executorService := executor.NewService(executor.NewExecutor(ethClient, entryPoint))
+	executorService := executor.NewService(executor.NewExecutor(ethClient, entryPoint, executor.WithMetrics()))
 
 	return service.RunWait(
 		executorService,
