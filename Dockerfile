@@ -7,6 +7,9 @@ RUN --mount=type=secret,id=CI_GITHUB_TOKEN \
     git config --global url.https://ci:${CI_GITHUB_TOKEN}@github.com/.insteadOf https://github.com/ || true
 
 WORKDIR /app
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
 
 COPY . .
 

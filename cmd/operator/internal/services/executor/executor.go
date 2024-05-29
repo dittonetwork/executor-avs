@@ -14,6 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+const decimals = 1e18
+
 var (
 	ErrBlockIsNil           = errors.New("block is nil")
 	ErrUnregisteredExecutor = errors.New("executor is not registered")
@@ -220,11 +222,16 @@ func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Work
 
 	log.With(log.String("tx_hash", tx.Hash().String())).Info("run multiple workflows")
 
-	log.With(log.Uint64("gas_used", tx.Gas())).Debug("gas used")
-	log.With(log.Uint64("gas_price", tx.GasPrice().Uint64())).Debug("gas price")
-	log.With(log.Uint64("native amount", tx.Gas()*tx.GasPrice().Uint64())).Debug("native spent")
+	log.With(
+		log.Uint64("gas_used", tx.Gas()),
+		log.Uint64("gas_price", tx.GasPrice().Uint64()),
+		log.Uint64("native amount", tx.Gas()*tx.GasPrice().Uint64()),
+	).Debug("debug message")
 
-	r.metrics.CountNativeTokenSpentAmountTotal(tx.Gas() * tx.GasPrice().Uint64())
+	spentAmount := new(big.Int).Mul(new(big.Int).SetUint64(tx.Gas()), tx.GasPrice())
+	spentAmountInETH := new(big.Int).Div(spentAmount, big.NewInt(decimals))
+
+	r.metrics.CountNativeTokenSpentAmountTotal(spentAmountInETH.Uint64())
 
 	return nil
 }

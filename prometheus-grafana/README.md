@@ -38,13 +38,10 @@ Make sure the ports 9090 and 3000 on the host are not already in use.
 
 ```bash
 $ docker compose up -d
-Creating network "prometheus-grafana_default" with the default driver
-Creating volume "prometheus-grafana_prom_data" with default driver
 ...
 Creating grafana    ... done
 Creating prometheus ... done
-Attaching to prometheus, grafana
-
+Creating operator ... done
 ```
 
 ## Expected result

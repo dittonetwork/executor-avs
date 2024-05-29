@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"math/big"
 	"time"
 
 	"github.com/dittonetwork/executor-avs/pkg/log"
@@ -122,7 +123,8 @@ func (m *Metrics) CollectBackgroundMetrics(client ethereumClient) {
 		if err != nil {
 			log.With(log.Err(err)).Error("get balance error")
 		} else {
-			m.nativeTokenCurrentBalance.Set(float64(balance.Int64()))
+			spentAmountInETH, _ := new(big.Int).Div(balance, big.NewInt(decimals)).Float64()
+			m.nativeTokenCurrentBalance.Set(spentAmountInETH)
 		}
 
 		time.Sleep(backgroundCheckInterval)

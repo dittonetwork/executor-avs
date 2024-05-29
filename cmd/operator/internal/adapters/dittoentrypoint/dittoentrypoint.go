@@ -12,8 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	"github.com/dittonetwork/executor-avs/cmd/operator/internal/contracts/gen/dittoentrypoint"
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
-	"github.com/dittonetwork/executor-avs/contracts/gen/dittoentrypoint"
 	"github.com/dittonetwork/executor-avs/pkg/hex"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )

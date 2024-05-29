@@ -11,6 +11,8 @@ services:
     ports:
       - 8080:8080
       - 7070:7070
+    environment:
+      - OPERATOR_PRIVATE_KEY=${OPERATOR_PRIVATE_KEY}
     command: ["run", 
               "--node-url", "wss://silent-tame-seed.ethereum-holesky.quiknode.pro/a09b2aafbc9447b172c9964f3ac40c85edf5fd6a", 
               "--contract-addr", "0xA1554918d4C6Ee86BDfA45a94937565FD3C35D00"]
