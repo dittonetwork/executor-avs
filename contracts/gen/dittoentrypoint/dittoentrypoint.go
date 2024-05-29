@@ -37,7 +37,7 @@ type IDittoEntryPointWorkflow struct {
 
 // DittoentrypointMetaData contains all meta data concerning the Dittoentrypoint contract.
 var DittoentrypointMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"arrangeExecutors\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"canExecWorkflowCheck\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"gasPrice\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelWorkflow\",\"inputs\":[{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getActiveWorkflows\",\"inputs\":[{\"name\":\"from\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"to\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"pageWorkflows\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllActiveWorkflows\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAmountActiveWorkflows\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAmountExecutors\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSeedExternal\",\"inputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"seed\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_protocolFees\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isExecutor\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isValidExecutor\",\"inputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"executorAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerExecutor\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registerWorkflow\",\"inputs\":[{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runMultipleWorkflows\",\"inputs\":[{\"name\":\"workflows\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"bool[]\",\"internalType\":\"bool[]\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runWorkflowWithRevert\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runWorkflowWithoutRevert\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setParams\",\"inputs\":[{\"name\":\"blockSlotSizeNext\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"epochSizeNext\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"startParamsInit\",\"inputs\":[{\"name\":\"blockSlotSize\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"epochSize\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"strategy\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"delegateManager\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unregisterExecutor\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"DittoEntryPoint_AlreadyInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DittoEntryPoint_AlreadyStartParamsInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DittoEntryPoint_WorkflowReverted\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"arrangeExecutors\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"canExecWorkflowCheck\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"gasPrice\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelWorkflow\",\"inputs\":[{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getActiveWorkflows\",\"inputs\":[{\"name\":\"from\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"to\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"pageWorkflows\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllActiveWorkflows\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAmountActiveWorkflows\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAmountExecutors\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSeedExternal\",\"inputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"seed\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_protocolFees\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isExecutor\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isValidExecutor\",\"inputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"executorAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerExecutor\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registerWorkflow\",\"inputs\":[{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runMultipleWorkflows\",\"inputs\":[{\"name\":\"workflows\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"bool[]\",\"internalType\":\"bool[]\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runWorkflowWithRevert\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runWorkflowWithoutRevert\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setParams\",\"inputs\":[{\"name\":\"blockSlotSizeNext\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"epochSizeNext\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setProtocolFees\",\"inputs\":[{\"name\":\"_protocolFees\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"startParamsInit\",\"inputs\":[{\"name\":\"blockSlotSize\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"epochSize\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"strategy\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"delegateManager\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unregisterExecutor\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"DittoEntryPointCancelWorkflow\",\"inputs\":[{\"name\":\"vault\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DittoEntryPointExecuterRegister\",\"inputs\":[{\"name\":\"executor\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DittoEntryPointExecuterUnregister\",\"inputs\":[{\"name\":\"executor\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DittoEntryPointRegisterWorkflow\",\"inputs\":[{\"name\":\"vault\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"DittoEntryPoint_AlreadyInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DittoEntryPoint_AlreadyStartParamsInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DittoEntryPoint_WorkflowReverted\",\"inputs\":[]}]",
 }
 
 // DittoentrypointABI is the input ABI used to generate the binding from.
@@ -583,21 +583,21 @@ func (_Dittoentrypoint *DittoentrypointTransactorSession) RunWorkflowWithRevert(
 
 // RunWorkflowWithoutRevert is a paid mutator transaction binding the contract method 0x46e2a68a.
 //
-// Solidity: function runWorkflowWithoutRevert(address vaultAddress, uint256 workflowId) returns(bool)
+// Solidity: function runWorkflowWithoutRevert(address vaultAddress, uint256 workflowId) returns(bool, bytes)
 func (_Dittoentrypoint *DittoentrypointTransactor) RunWorkflowWithoutRevert(opts *bind.TransactOpts, vaultAddress common.Address, workflowId *big.Int) (*types.Transaction, error) {
 	return _Dittoentrypoint.contract.Transact(opts, "runWorkflowWithoutRevert", vaultAddress, workflowId)
 }
 
 // RunWorkflowWithoutRevert is a paid mutator transaction binding the contract method 0x46e2a68a.
 //
-// Solidity: function runWorkflowWithoutRevert(address vaultAddress, uint256 workflowId) returns(bool)
+// Solidity: function runWorkflowWithoutRevert(address vaultAddress, uint256 workflowId) returns(bool, bytes)
 func (_Dittoentrypoint *DittoentrypointSession) RunWorkflowWithoutRevert(vaultAddress common.Address, workflowId *big.Int) (*types.Transaction, error) {
 	return _Dittoentrypoint.Contract.RunWorkflowWithoutRevert(&_Dittoentrypoint.TransactOpts, vaultAddress, workflowId)
 }
 
 // RunWorkflowWithoutRevert is a paid mutator transaction binding the contract method 0x46e2a68a.
 //
-// Solidity: function runWorkflowWithoutRevert(address vaultAddress, uint256 workflowId) returns(bool)
+// Solidity: function runWorkflowWithoutRevert(address vaultAddress, uint256 workflowId) returns(bool, bytes)
 func (_Dittoentrypoint *DittoentrypointTransactorSession) RunWorkflowWithoutRevert(vaultAddress common.Address, workflowId *big.Int) (*types.Transaction, error) {
 	return _Dittoentrypoint.Contract.RunWorkflowWithoutRevert(&_Dittoentrypoint.TransactOpts, vaultAddress, workflowId)
 }
@@ -621,6 +621,27 @@ func (_Dittoentrypoint *DittoentrypointSession) SetParams(blockSlotSizeNext *big
 // Solidity: function setParams(uint256 blockSlotSizeNext, uint256 epochSizeNext) returns()
 func (_Dittoentrypoint *DittoentrypointTransactorSession) SetParams(blockSlotSizeNext *big.Int, epochSizeNext *big.Int) (*types.Transaction, error) {
 	return _Dittoentrypoint.Contract.SetParams(&_Dittoentrypoint.TransactOpts, blockSlotSizeNext, epochSizeNext)
+}
+
+// SetProtocolFees is a paid mutator transaction binding the contract method 0x5b8be0df.
+//
+// Solidity: function setProtocolFees(address _protocolFees) returns()
+func (_Dittoentrypoint *DittoentrypointTransactor) SetProtocolFees(opts *bind.TransactOpts, _protocolFees common.Address) (*types.Transaction, error) {
+	return _Dittoentrypoint.contract.Transact(opts, "setProtocolFees", _protocolFees)
+}
+
+// SetProtocolFees is a paid mutator transaction binding the contract method 0x5b8be0df.
+//
+// Solidity: function setProtocolFees(address _protocolFees) returns()
+func (_Dittoentrypoint *DittoentrypointSession) SetProtocolFees(_protocolFees common.Address) (*types.Transaction, error) {
+	return _Dittoentrypoint.Contract.SetProtocolFees(&_Dittoentrypoint.TransactOpts, _protocolFees)
+}
+
+// SetProtocolFees is a paid mutator transaction binding the contract method 0x5b8be0df.
+//
+// Solidity: function setProtocolFees(address _protocolFees) returns()
+func (_Dittoentrypoint *DittoentrypointTransactorSession) SetProtocolFees(_protocolFees common.Address) (*types.Transaction, error) {
+	return _Dittoentrypoint.Contract.SetProtocolFees(&_Dittoentrypoint.TransactOpts, _protocolFees)
 }
 
 // StartParamsInit is a paid mutator transaction binding the contract method 0x05ce8c4d.
@@ -663,4 +684,562 @@ func (_Dittoentrypoint *DittoentrypointSession) UnregisterExecutor() (*types.Tra
 // Solidity: function unregisterExecutor() returns()
 func (_Dittoentrypoint *DittoentrypointTransactorSession) UnregisterExecutor() (*types.Transaction, error) {
 	return _Dittoentrypoint.Contract.UnregisterExecutor(&_Dittoentrypoint.TransactOpts)
+}
+
+// DittoentrypointDittoEntryPointCancelWorkflowIterator is returned from FilterDittoEntryPointCancelWorkflow and is used to iterate over the raw logs and unpacked data for DittoEntryPointCancelWorkflow events raised by the Dittoentrypoint contract.
+type DittoentrypointDittoEntryPointCancelWorkflowIterator struct {
+	Event *DittoentrypointDittoEntryPointCancelWorkflow // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DittoentrypointDittoEntryPointCancelWorkflowIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DittoentrypointDittoEntryPointCancelWorkflow)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DittoentrypointDittoEntryPointCancelWorkflow)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DittoentrypointDittoEntryPointCancelWorkflowIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DittoentrypointDittoEntryPointCancelWorkflowIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DittoentrypointDittoEntryPointCancelWorkflow represents a DittoEntryPointCancelWorkflow event raised by the Dittoentrypoint contract.
+type DittoentrypointDittoEntryPointCancelWorkflow struct {
+	Vault      common.Address
+	WorkflowId *big.Int
+	Raw        types.Log // Blockchain specific contextual infos
+}
+
+// FilterDittoEntryPointCancelWorkflow is a free log retrieval operation binding the contract event 0x7e0aef7b6397c5da713e203111cfb90ea0c9291d8ef058f35dae92313ad7a707.
+//
+// Solidity: event DittoEntryPointCancelWorkflow(address indexed vault, uint256 workflowId)
+func (_Dittoentrypoint *DittoentrypointFilterer) FilterDittoEntryPointCancelWorkflow(opts *bind.FilterOpts, vault []common.Address) (*DittoentrypointDittoEntryPointCancelWorkflowIterator, error) {
+
+	var vaultRule []interface{}
+	for _, vaultItem := range vault {
+		vaultRule = append(vaultRule, vaultItem)
+	}
+
+	logs, sub, err := _Dittoentrypoint.contract.FilterLogs(opts, "DittoEntryPointCancelWorkflow", vaultRule)
+	if err != nil {
+		return nil, err
+	}
+	return &DittoentrypointDittoEntryPointCancelWorkflowIterator{contract: _Dittoentrypoint.contract, event: "DittoEntryPointCancelWorkflow", logs: logs, sub: sub}, nil
+}
+
+// WatchDittoEntryPointCancelWorkflow is a free log subscription operation binding the contract event 0x7e0aef7b6397c5da713e203111cfb90ea0c9291d8ef058f35dae92313ad7a707.
+//
+// Solidity: event DittoEntryPointCancelWorkflow(address indexed vault, uint256 workflowId)
+func (_Dittoentrypoint *DittoentrypointFilterer) WatchDittoEntryPointCancelWorkflow(opts *bind.WatchOpts, sink chan<- *DittoentrypointDittoEntryPointCancelWorkflow, vault []common.Address) (event.Subscription, error) {
+
+	var vaultRule []interface{}
+	for _, vaultItem := range vault {
+		vaultRule = append(vaultRule, vaultItem)
+	}
+
+	logs, sub, err := _Dittoentrypoint.contract.WatchLogs(opts, "DittoEntryPointCancelWorkflow", vaultRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DittoentrypointDittoEntryPointCancelWorkflow)
+				if err := _Dittoentrypoint.contract.UnpackLog(event, "DittoEntryPointCancelWorkflow", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDittoEntryPointCancelWorkflow is a log parse operation binding the contract event 0x7e0aef7b6397c5da713e203111cfb90ea0c9291d8ef058f35dae92313ad7a707.
+//
+// Solidity: event DittoEntryPointCancelWorkflow(address indexed vault, uint256 workflowId)
+func (_Dittoentrypoint *DittoentrypointFilterer) ParseDittoEntryPointCancelWorkflow(log types.Log) (*DittoentrypointDittoEntryPointCancelWorkflow, error) {
+	event := new(DittoentrypointDittoEntryPointCancelWorkflow)
+	if err := _Dittoentrypoint.contract.UnpackLog(event, "DittoEntryPointCancelWorkflow", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// DittoentrypointDittoEntryPointExecuterRegisterIterator is returned from FilterDittoEntryPointExecuterRegister and is used to iterate over the raw logs and unpacked data for DittoEntryPointExecuterRegister events raised by the Dittoentrypoint contract.
+type DittoentrypointDittoEntryPointExecuterRegisterIterator struct {
+	Event *DittoentrypointDittoEntryPointExecuterRegister // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DittoentrypointDittoEntryPointExecuterRegisterIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DittoentrypointDittoEntryPointExecuterRegister)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DittoentrypointDittoEntryPointExecuterRegister)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DittoentrypointDittoEntryPointExecuterRegisterIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DittoentrypointDittoEntryPointExecuterRegisterIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DittoentrypointDittoEntryPointExecuterRegister represents a DittoEntryPointExecuterRegister event raised by the Dittoentrypoint contract.
+type DittoentrypointDittoEntryPointExecuterRegister struct {
+	Executor common.Address
+	Raw      types.Log // Blockchain specific contextual infos
+}
+
+// FilterDittoEntryPointExecuterRegister is a free log retrieval operation binding the contract event 0xe16d378d46c890b88b378d2ef260e841dc24ec60fc189be6e991fc540dca12c9.
+//
+// Solidity: event DittoEntryPointExecuterRegister(address executor)
+func (_Dittoentrypoint *DittoentrypointFilterer) FilterDittoEntryPointExecuterRegister(opts *bind.FilterOpts) (*DittoentrypointDittoEntryPointExecuterRegisterIterator, error) {
+
+	logs, sub, err := _Dittoentrypoint.contract.FilterLogs(opts, "DittoEntryPointExecuterRegister")
+	if err != nil {
+		return nil, err
+	}
+	return &DittoentrypointDittoEntryPointExecuterRegisterIterator{contract: _Dittoentrypoint.contract, event: "DittoEntryPointExecuterRegister", logs: logs, sub: sub}, nil
+}
+
+// WatchDittoEntryPointExecuterRegister is a free log subscription operation binding the contract event 0xe16d378d46c890b88b378d2ef260e841dc24ec60fc189be6e991fc540dca12c9.
+//
+// Solidity: event DittoEntryPointExecuterRegister(address executor)
+func (_Dittoentrypoint *DittoentrypointFilterer) WatchDittoEntryPointExecuterRegister(opts *bind.WatchOpts, sink chan<- *DittoentrypointDittoEntryPointExecuterRegister) (event.Subscription, error) {
+
+	logs, sub, err := _Dittoentrypoint.contract.WatchLogs(opts, "DittoEntryPointExecuterRegister")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DittoentrypointDittoEntryPointExecuterRegister)
+				if err := _Dittoentrypoint.contract.UnpackLog(event, "DittoEntryPointExecuterRegister", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDittoEntryPointExecuterRegister is a log parse operation binding the contract event 0xe16d378d46c890b88b378d2ef260e841dc24ec60fc189be6e991fc540dca12c9.
+//
+// Solidity: event DittoEntryPointExecuterRegister(address executor)
+func (_Dittoentrypoint *DittoentrypointFilterer) ParseDittoEntryPointExecuterRegister(log types.Log) (*DittoentrypointDittoEntryPointExecuterRegister, error) {
+	event := new(DittoentrypointDittoEntryPointExecuterRegister)
+	if err := _Dittoentrypoint.contract.UnpackLog(event, "DittoEntryPointExecuterRegister", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// DittoentrypointDittoEntryPointExecuterUnregisterIterator is returned from FilterDittoEntryPointExecuterUnregister and is used to iterate over the raw logs and unpacked data for DittoEntryPointExecuterUnregister events raised by the Dittoentrypoint contract.
+type DittoentrypointDittoEntryPointExecuterUnregisterIterator struct {
+	Event *DittoentrypointDittoEntryPointExecuterUnregister // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DittoentrypointDittoEntryPointExecuterUnregisterIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DittoentrypointDittoEntryPointExecuterUnregister)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DittoentrypointDittoEntryPointExecuterUnregister)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DittoentrypointDittoEntryPointExecuterUnregisterIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DittoentrypointDittoEntryPointExecuterUnregisterIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DittoentrypointDittoEntryPointExecuterUnregister represents a DittoEntryPointExecuterUnregister event raised by the Dittoentrypoint contract.
+type DittoentrypointDittoEntryPointExecuterUnregister struct {
+	Executor common.Address
+	Raw      types.Log // Blockchain specific contextual infos
+}
+
+// FilterDittoEntryPointExecuterUnregister is a free log retrieval operation binding the contract event 0xca999231fc65bf68e10375fc21ab441f4f58421c91854effcb9707f479efffb0.
+//
+// Solidity: event DittoEntryPointExecuterUnregister(address executor)
+func (_Dittoentrypoint *DittoentrypointFilterer) FilterDittoEntryPointExecuterUnregister(opts *bind.FilterOpts) (*DittoentrypointDittoEntryPointExecuterUnregisterIterator, error) {
+
+	logs, sub, err := _Dittoentrypoint.contract.FilterLogs(opts, "DittoEntryPointExecuterUnregister")
+	if err != nil {
+		return nil, err
+	}
+	return &DittoentrypointDittoEntryPointExecuterUnregisterIterator{contract: _Dittoentrypoint.contract, event: "DittoEntryPointExecuterUnregister", logs: logs, sub: sub}, nil
+}
+
+// WatchDittoEntryPointExecuterUnregister is a free log subscription operation binding the contract event 0xca999231fc65bf68e10375fc21ab441f4f58421c91854effcb9707f479efffb0.
+//
+// Solidity: event DittoEntryPointExecuterUnregister(address executor)
+func (_Dittoentrypoint *DittoentrypointFilterer) WatchDittoEntryPointExecuterUnregister(opts *bind.WatchOpts, sink chan<- *DittoentrypointDittoEntryPointExecuterUnregister) (event.Subscription, error) {
+
+	logs, sub, err := _Dittoentrypoint.contract.WatchLogs(opts, "DittoEntryPointExecuterUnregister")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DittoentrypointDittoEntryPointExecuterUnregister)
+				if err := _Dittoentrypoint.contract.UnpackLog(event, "DittoEntryPointExecuterUnregister", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDittoEntryPointExecuterUnregister is a log parse operation binding the contract event 0xca999231fc65bf68e10375fc21ab441f4f58421c91854effcb9707f479efffb0.
+//
+// Solidity: event DittoEntryPointExecuterUnregister(address executor)
+func (_Dittoentrypoint *DittoentrypointFilterer) ParseDittoEntryPointExecuterUnregister(log types.Log) (*DittoentrypointDittoEntryPointExecuterUnregister, error) {
+	event := new(DittoentrypointDittoEntryPointExecuterUnregister)
+	if err := _Dittoentrypoint.contract.UnpackLog(event, "DittoEntryPointExecuterUnregister", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// DittoentrypointDittoEntryPointRegisterWorkflowIterator is returned from FilterDittoEntryPointRegisterWorkflow and is used to iterate over the raw logs and unpacked data for DittoEntryPointRegisterWorkflow events raised by the Dittoentrypoint contract.
+type DittoentrypointDittoEntryPointRegisterWorkflowIterator struct {
+	Event *DittoentrypointDittoEntryPointRegisterWorkflow // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *DittoentrypointDittoEntryPointRegisterWorkflowIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(DittoentrypointDittoEntryPointRegisterWorkflow)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(DittoentrypointDittoEntryPointRegisterWorkflow)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *DittoentrypointDittoEntryPointRegisterWorkflowIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *DittoentrypointDittoEntryPointRegisterWorkflowIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// DittoentrypointDittoEntryPointRegisterWorkflow represents a DittoEntryPointRegisterWorkflow event raised by the Dittoentrypoint contract.
+type DittoentrypointDittoEntryPointRegisterWorkflow struct {
+	Vault      common.Address
+	WorkflowId *big.Int
+	Raw        types.Log // Blockchain specific contextual infos
+}
+
+// FilterDittoEntryPointRegisterWorkflow is a free log retrieval operation binding the contract event 0x7d89995e8cf5bdb0963851260411a4a799c0a5a754120fab6b126845ce4bdf60.
+//
+// Solidity: event DittoEntryPointRegisterWorkflow(address indexed vault, uint256 workflowId)
+func (_Dittoentrypoint *DittoentrypointFilterer) FilterDittoEntryPointRegisterWorkflow(opts *bind.FilterOpts, vault []common.Address) (*DittoentrypointDittoEntryPointRegisterWorkflowIterator, error) {
+
+	var vaultRule []interface{}
+	for _, vaultItem := range vault {
+		vaultRule = append(vaultRule, vaultItem)
+	}
+
+	logs, sub, err := _Dittoentrypoint.contract.FilterLogs(opts, "DittoEntryPointRegisterWorkflow", vaultRule)
+	if err != nil {
+		return nil, err
+	}
+	return &DittoentrypointDittoEntryPointRegisterWorkflowIterator{contract: _Dittoentrypoint.contract, event: "DittoEntryPointRegisterWorkflow", logs: logs, sub: sub}, nil
+}
+
+// WatchDittoEntryPointRegisterWorkflow is a free log subscription operation binding the contract event 0x7d89995e8cf5bdb0963851260411a4a799c0a5a754120fab6b126845ce4bdf60.
+//
+// Solidity: event DittoEntryPointRegisterWorkflow(address indexed vault, uint256 workflowId)
+func (_Dittoentrypoint *DittoentrypointFilterer) WatchDittoEntryPointRegisterWorkflow(opts *bind.WatchOpts, sink chan<- *DittoentrypointDittoEntryPointRegisterWorkflow, vault []common.Address) (event.Subscription, error) {
+
+	var vaultRule []interface{}
+	for _, vaultItem := range vault {
+		vaultRule = append(vaultRule, vaultItem)
+	}
+
+	logs, sub, err := _Dittoentrypoint.contract.WatchLogs(opts, "DittoEntryPointRegisterWorkflow", vaultRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(DittoentrypointDittoEntryPointRegisterWorkflow)
+				if err := _Dittoentrypoint.contract.UnpackLog(event, "DittoEntryPointRegisterWorkflow", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDittoEntryPointRegisterWorkflow is a log parse operation binding the contract event 0x7d89995e8cf5bdb0963851260411a4a799c0a5a754120fab6b126845ce4bdf60.
+//
+// Solidity: event DittoEntryPointRegisterWorkflow(address indexed vault, uint256 workflowId)
+func (_Dittoentrypoint *DittoentrypointFilterer) ParseDittoEntryPointRegisterWorkflow(log types.Log) (*DittoentrypointDittoEntryPointRegisterWorkflow, error) {
+	event := new(DittoentrypointDittoEntryPointRegisterWorkflow)
+	if err := _Dittoentrypoint.contract.UnpackLog(event, "DittoEntryPointRegisterWorkflow", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }
