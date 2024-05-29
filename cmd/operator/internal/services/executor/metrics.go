@@ -20,7 +20,7 @@ type Metrics struct {
 	executedWorkflowsAmountTotal prometheus.Counter
 	errorsTotal                  prometheus.Counter
 	operatorCPUUsage             prometheus.Gauge
-	operatorMemoryUsage          prometheus.Gauge
+	// operatorMemoryUsage          prometheus.Gauge // prometheus collects this metric by default
 }
 
 func NewMetrics() *Metrics {
@@ -50,11 +50,11 @@ func NewMetrics() *Metrics {
 			Name:      "operator_cpu_usage",
 			Help:      "CPU usage of the operator",
 		}),
-		operatorMemoryUsage: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "operator_memory_usage",
-			Help:      "Memory usage of the operator",
-		}),
+		// operatorMemoryUsage: prometheus.NewGauge(prometheus.GaugeOpts{
+		// 	Namespace: namespace,
+		// 	Name:      "operator_memory_usage",
+		// 	Help:      "Memory usage of the operator",
+		// }),
 	}
 }
 
@@ -78,9 +78,9 @@ func (m *Metrics) SetCPUUsage(cnt float64) {
 	m.operatorCPUUsage.Set(cnt)
 }
 
-func (m *Metrics) SetOperatorMemoryUsage(cnt uint64) {
-	m.operatorMemoryUsage.Set(float64(cnt))
-}
+// func (m *Metrics) SetOperatorMemoryUsage(cnt uint64) {
+// 	m.operatorMemoryUsage.Set(float64(cnt))
+// }
 
 // Describe implements prometheus.Collector interface.
 func (m *Metrics) Describe(descs chan<- *prometheus.Desc) {
@@ -89,7 +89,7 @@ func (m *Metrics) Describe(descs chan<- *prometheus.Desc) {
 	m.executedWorkflowsAmountTotal.Describe(descs)
 	m.errorsTotal.Describe(descs)
 	m.operatorCPUUsage.Describe(descs)
-	m.operatorMemoryUsage.Describe(descs)
+	// m.operatorMemoryUsage.Describe(descs)
 }
 
 // Collect implements prometheus.Collector interface.
@@ -99,7 +99,7 @@ func (m *Metrics) Collect(metrics chan<- prometheus.Metric) {
 	m.executedWorkflowsAmountTotal.Collect(metrics)
 	m.errorsTotal.Collect(metrics)
 	m.operatorCPUUsage.Collect(metrics)
-	m.operatorMemoryUsage.Collect(metrics)
+	// m.operatorMemoryUsage.Collect(metrics)
 }
 
 func (m *Metrics) Register() {
@@ -108,8 +108,8 @@ func (m *Metrics) Register() {
 
 func (m *Metrics) CollectBackgroundMetrics(client ethereumClient) {
 	for {
-		mem := stats.GetMemoryUsage()
-		m.SetOperatorMemoryUsage(mem)
+		// mem := stats.GetMemoryUsage()
+		// m.SetOperatorMemoryUsage(mem)
 
 		cpu, err := stats.GetCPUUsage()
 		if err != nil {
