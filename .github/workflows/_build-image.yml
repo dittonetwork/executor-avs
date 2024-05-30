@@ -19,8 +19,6 @@ jobs:
           load: true # Loads the image into Docker daemon
           build-args: |
             APP=${{ inputs.APP }}
-          secrets: |
-            CI_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
       - name: Save Docker image
         run: docker save ditto-operator-avs:latest | gzip > image.tar.gz
