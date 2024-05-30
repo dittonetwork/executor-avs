@@ -13,7 +13,6 @@ RUN go mod download
 
 COPY . .
 
-RUN go mod download
 RUN make go-build-$APP BUILD_MODE=release
 
 FROM alpine:latest
