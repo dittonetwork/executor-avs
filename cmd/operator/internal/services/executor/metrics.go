@@ -2,12 +2,13 @@ package executor
 
 import (
 	"context"
-	"math/big"
 	"time"
 
-	"github.com/dittonetwork/executor-avs/pkg/log"
-	"github.com/dittonetwork/executor-avs/pkg/stats"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/dittonetwork/executor-avs/pkg/log"
+	"github.com/dittonetwork/executor-avs/pkg/primitives"
+	"github.com/dittonetwork/executor-avs/pkg/stats"
 )
 
 const (
@@ -16,7 +17,7 @@ const (
 )
 
 type Metrics struct {
-	nativeTokenSpentAmountTotal  prometheus.Counter
+	nativeTokenSpentAmount       prometheus.Gauge
 	nativeTokenCurrentBalance    prometheus.Gauge
 	executedWorkflowsAmountTotal prometheus.Counter
 	errorsTotal                  prometheus.Counter
@@ -25,9 +26,9 @@ type Metrics struct {
 
 func NewMetrics() *Metrics {
 	return &Metrics{
-		nativeTokenSpentAmountTotal: prometheus.NewCounter(prometheus.CounterOpts{
+		nativeTokenSpentAmount: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
-			Name:      "native_token_spent_amount_total",
+			Name:      "native_token_spent_amount",
 			Help:      "Total amount of native token spent",
 		}),
 		nativeTokenCurrentBalance: prometheus.NewGauge(prometheus.GaugeOpts{
@@ -53,8 +54,8 @@ func NewMetrics() *Metrics {
 	}
 }
 
-func (m *Metrics) CountNativeTokenSpentAmountTotal(cnt uint64) {
-	m.nativeTokenSpentAmountTotal.Add(float64(cnt))
+func (m *Metrics) CountNativeTokenSpentAmountTotal(cnt float64) {
+	m.nativeTokenSpentAmount.Add(cnt)
 }
 
 func (m *Metrics) SetNativeTokenCurrentBalance(cnt int) {
@@ -75,7 +76,7 @@ func (m *Metrics) SetCPUUsage(cnt float64) {
 
 // Describe implements prometheus.Collector interface.
 func (m *Metrics) Describe(descs chan<- *prometheus.Desc) {
-	m.nativeTokenSpentAmountTotal.Describe(descs)
+	m.nativeTokenSpentAmount.Describe(descs)
 	m.nativeTokenCurrentBalance.Describe(descs)
 	m.executedWorkflowsAmountTotal.Describe(descs)
 	m.errorsTotal.Describe(descs)
@@ -84,7 +85,7 @@ func (m *Metrics) Describe(descs chan<- *prometheus.Desc) {
 
 // Collect implements prometheus.Collector interface.
 func (m *Metrics) Collect(metrics chan<- prometheus.Metric) {
-	m.nativeTokenSpentAmountTotal.Collect(metrics)
+	m.nativeTokenSpentAmount.Collect(metrics)
 	m.nativeTokenCurrentBalance.Collect(metrics)
 	m.executedWorkflowsAmountTotal.Collect(metrics)
 	m.errorsTotal.Collect(metrics)
@@ -109,10 +110,7 @@ func (m *Metrics) CollectBackgroundMetrics(client ethereumClient) {
 		if err != nil {
 			log.With(log.Err(err)).Error("get balance error")
 		} else {
-			spentAmountInETH, _ := new(big.Int).Div(balance, big.NewInt(decimals)).Float64()
-			m.nativeTokenCurrentBalance.Set(spentAmountInETH)
-
-			log.With(log.Float64("balance", spentAmountInETH)).Info("current balance")
+			log.With(log.Float64("balance", primitives.WeiToETH(balance))).Info("current balance")
 		}
 
 		time.Sleep(backgroundCheckInterval)

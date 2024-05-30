@@ -9,12 +9,11 @@ import (
 
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
+	"github.com/dittonetwork/executor-avs/pkg/primitives"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
-
-const decimals = 1e18
 
 var (
 	ErrBlockIsNil           = errors.New("block is nil")
@@ -74,6 +73,16 @@ func (r *Executor) SubscribeToNewBlocks(ctx context.Context) (chan *types.Header
 }
 
 func (r *Executor) Handle(ctx context.Context, blockHash common.Hash) error {
+	if err := r.handle(ctx, blockHash); err != nil {
+		r.metrics.CountErrorsTotal(1)
+
+		return err
+	}
+
+	return nil
+}
+
+func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 	block, err := r.Client.BlockByHash(ctx, blockHash)
 	if err != nil {
 		return fmt.Errorf("get block by hash: %w", err)
@@ -229,9 +238,8 @@ func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Work
 	).Debug("debug message")
 
 	spentAmount := new(big.Int).Mul(new(big.Int).SetUint64(tx.Gas()), tx.GasPrice())
-	spentAmountInETH := new(big.Int).Div(spentAmount, big.NewInt(decimals))
 
-	r.metrics.CountNativeTokenSpentAmountTotal(spentAmountInETH.Uint64())
+	r.metrics.CountNativeTokenSpentAmountTotal(primitives.WeiToETH(spentAmount))
 
 	return nil
 }
