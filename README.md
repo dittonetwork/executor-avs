@@ -23,15 +23,17 @@ At some point in the epoch, an attesting task is created. By this time, every *a
 
 ## Operator roles
 
-Each operator can assume one of three roles within a given time slot: *executor*, *attester*, or *aggregator*.
+Each operator engages in two routines at every moment: the execution flow and the validation flow. In each process, the operator can assume one of the given roles for a specific time slot. For execution, the operator can be an active or passive executor. For validation, the operator can be an aggregator or an attester.
 
-*Executor*. At each moment in time, a single operator is chosen to send a transaction on the chain. An operator in the executor role should review which active workflows can be executed at that moment and create a batched transaction to run all workflows scheduled for execution.
+An *active executor* is a single operator chosen at each moment to send a transaction on the chain. This operator reviews which active workflows can be executed at that moment (simulation) and creates a batched transaction to run all scheduled workflows.
 
-*Attesters*. A committee of *attesters* is selected to verify the fidelity of the executor's actions. For the majority of the time, they receive active workflows (just like the *executor*) and store them in their local storage. When an attestation task arises, they are required to cast a vote on whether the *executor* has performed their duties accurately. The task and votes are transmitted via a peer-to-peer connection.
+*Passive executors* are operators who are not the active executor. They perform the same checks as the active executor but, instead of sending a transaction on the chain, they store the simulation result locally for further attesting.
 
-*Aggregator*. This role is responsible for collecting verdicts and is authorized to send the consensus verdict to the chain.
+*Attesters* form a committee selected to verify the accuracy of the executor's actions. When an attestation task arises, they cast a vote on the executor's performance accuracy. The task and votes are transmitted through a peer-to-peer connection.
 
-P.S.: In the initial iteration, the *aggregator* will also manage the bootstrap node and the creation of attesting tasks.
+The *aggregator* collects verdicts and is authorized to send the consensus verdict to the chain.
+
+P.S.: In the initial iteration, Ditto will hold the predefined operator, serving as the *aggregator*. This operator will also manage the bootstrap node and the creation of attesting tasks. In the future, we plan to make this role assignable to any operator.
 
 
 ## Contracts
