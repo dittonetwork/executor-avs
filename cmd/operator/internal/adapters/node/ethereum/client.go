@@ -74,3 +74,12 @@ func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) err
 
 	return nil
 }
+
+func (c *Client) GetBalance(ctx context.Context) (*big.Int, error) {
+	balance, err := c.client.BalanceAt(ctx, crypto.PubkeyToAddress(c.privateKey.PublicKey), nil)
+	if err != nil {
+		return nil, fmt.Errorf("get balance: %w", err)
+	}
+
+	return balance, nil
+}

@@ -136,10 +136,7 @@ func TestExecutor_Handle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &executor.Executor{
-				Client:     tt.fields.client(t),
-				EntryPoint: tt.fields.entryPoint(t),
-			}
+			r := executor.NewExecutor(tt.fields.client(t), tt.fields.entryPoint(t))
 			if err := r.Handle(ctx, blockHash); (err != nil) != tt.wantErr {
 				assert.Equal(t, tt.expectedErr, err)
 			}

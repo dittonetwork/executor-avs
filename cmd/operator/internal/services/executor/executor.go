@@ -9,6 +9,7 @@ import (
 
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
+	"github.com/dittonetwork/executor-avs/pkg/primitives"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -25,6 +26,7 @@ type ethereumClient interface {
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
 	SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (string, error)
 	SendTransaction(ctx context.Context, tx *types.Transaction) error
+	GetBalance(ctx context.Context) (*big.Int, error)
 }
 
 //go:generate mockery --name dittoEntryPoint --output ./mocks --outpkg mocks
@@ -39,13 +41,31 @@ type dittoEntryPoint interface {
 type Executor struct {
 	Client     ethereumClient
 	EntryPoint dittoEntryPoint
+
+	metrics *Metrics
 }
 
-func NewExecutor(client ethereumClient, entryPoint dittoEntryPoint) *Executor {
-	return &Executor{
+type Options func(*Executor)
+
+func WithMetrics() Options {
+	return func(e *Executor) {
+		e.metrics.Register()
+		go e.metrics.CollectBackgroundMetrics(e.Client)
+	}
+}
+
+func NewExecutor(client ethereumClient, entryPoint dittoEntryPoint, opts ...Options) *Executor {
+	e := &Executor{
 		Client:     client,
 		EntryPoint: entryPoint,
+		metrics:    NewMetrics(),
 	}
+
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	return e
 }
 
 func (r *Executor) SubscribeToNewBlocks(ctx context.Context) (chan *types.Header, ethereum.Subscription, error) {
@@ -53,6 +73,16 @@ func (r *Executor) SubscribeToNewBlocks(ctx context.Context) (chan *types.Header
 }
 
 func (r *Executor) Handle(ctx context.Context, blockHash common.Hash) error {
+	if err := r.handle(ctx, blockHash); err != nil {
+		r.metrics.CountErrorsTotal(1)
+
+		return err
+	}
+
+	return nil
+}
+
+func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 	block, err := r.Client.BlockByHash(ctx, blockHash)
 	if err != nil {
 		return fmt.Errorf("get block by hash: %w", err)
@@ -101,6 +131,8 @@ func (r *Executor) Handle(ctx context.Context, blockHash common.Hash) error {
 	if err = r.executeWorkflows(ctx, executableWorkflows); err != nil {
 		return fmt.Errorf("execute workflows: %w", err)
 	}
+
+	r.metrics.CountExecutedWorkflowsAmountTotal(len(executableWorkflows))
 
 	return nil
 }
@@ -198,6 +230,16 @@ func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Work
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().String())).Info("run multiple workflows")
+
+	log.With(
+		log.Uint64("gas_used", tx.Gas()),
+		log.Uint64("gas_price", tx.GasPrice().Uint64()),
+		log.Uint64("native amount", tx.Gas()*tx.GasPrice().Uint64()),
+	).Debug("debug message")
+
+	spentAmount := new(big.Int).Mul(new(big.Int).SetUint64(tx.Gas()), tx.GasPrice())
+
+	r.metrics.CountNativeTokenSpentAmountTotal(primitives.WeiToETH(spentAmount))
 
 	return nil
 }
