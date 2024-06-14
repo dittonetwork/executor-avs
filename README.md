@@ -33,6 +33,8 @@ An *active executor* is a single operator chosen at each moment to send a transa
 
 The *aggregator* collects verdicts and is authorized to send the consensus verdict to the chain.
 
+For security reasons we provide the way to delegate workflow runs signature creation to other key. Once operator is registered to our AVS, delegated signer must be set. All following routine transactions must be signed by delegated signer key, not the initial operator key you registered with.
+
 P.S.: In the initial iteration, Ditto will hold the predefined operator, serving as the *aggregator*. This operator will also manage the bootstrap node and the creation of attesting tasks. In the future, we plan to make this role assignable to any operator.
 
 
@@ -80,22 +82,24 @@ Currently, the operator's flow consists of two parallel actions: running the ope
 
 Running executor:
 
-1. Download a binary
-2. Set environment (export private key to OPERATOR_PRIVATE_KEY env)
-3. Launch a binary as `./bin/operator run --node-url <node_url> --contract-addr <contract_addr>`
-4. Send a transaction notifying others you want to be included into the pool for task assignment: `./bin/operator register --node-url <node_url> --contract-addr <contract_addr>`
-5. Wait until rearrangement happens (epoch increment). Firstly, you’ll observe *not executor* messages, then it will become either *Not my turn to execute* or info about active workflows in case if it is your turn. You’re now in forever loop, being a part of executors network.
-6. When you want to leave, you have to send unregister transaction, precedure is the same: `./bin/operator run --node-url <node_url> --contract-addr <contract_addr>`
-
-Currently, the application is stateless and does not require runtime libraries. As such, you can run it bare-metal without affecting your system or encountering dependency issues. We also offer a containerized version, which functions identically but differs in command passing. This alternative may be more comfortable for some users.
+1. Download a binary.
+2. Set env variable with private key: `export OPERATOR_PRIVATE_KEY=<operator's hex private key without 0x prefix>`
+3. Register your operator in AVS: `./operator register --node-url <node_url> --contract-addr <contract_addr>`
+4. Set delegated signer: `./bin/operator set-signer --node-url <node_url> --contract-addr <contract_addr> --address <delegated signer address 0x...>`
+5. Replace env variable with delegated signer's private key: ``export OPERATOR_PRIVATE_KEY=<<delegated signer's hex private key without 0x prefix>>`
+6. Launch a binary as `./bin/operator run --node-url <node_url> --contract-addr <contract_addr>`
+7. In other console session send a transaction notifying others you want to be included into the pool for task assignment: `./bin/operator activate --node-url <node_url> --contract-addr <contract_addr>`. Don't forget to set `OPERATOR_PRIVATE_KEY` env as well, as you did in step 4.
+8. Wait until rearrangement happens (epoch increment). Firstly, you’ll observe *not executor* messages, then it will become either *Not my turn to execute* or info about active workflows in case if it is your turn. You’re now in forever loop, being a part of executors network.
+9. When you want to leave, you have to send unregister transaction from another console session. Repeat step 5, then run: `./bin/operator deactivate --node-url <node_url> --contract-addr <contract_addr>`, then wait until logs inform you that you're no longer in a pool of active operators.
+10. To deregesiter operator from AVS, run `./operator deregister --node-url <node_url> --contract-addr <contract_addr>` with `OPERATOR_PRIVATE_KEY` env set to operator's private key from step 2.
 
 ## Deployments
 ### Holesky Testnet Deployments
 | Name | Proxy |
 | ---- | ---- |
-| DittoEntryPoint |[`0xA1554918d4C6Ee86BDfA45a94937565FD3C35D00`](https://holesky.etherscan.io/address/0xA1554918d4C6Ee86BDfA45a94937565FD3C35D00)|
+| DittoEntryPoint |[`0xb7595CaF0d362bFBF89D9E64e1583B8238841CeB`](https://holesky.etherscan.io/address/0xb7595CaF0d362bFBF89D9E64e1583B8238841CeB)|
 
 ## Developer guide
 
 ### Code generation
-`go install github.com/ethereum/go-ethereum/cmd/abigen@latest` - to be able to generate Go code from abi files
+`make abi-gen` - to generate Go code from abi files

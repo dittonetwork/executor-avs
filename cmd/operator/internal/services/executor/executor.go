@@ -43,6 +43,8 @@ type Executor struct {
 	EntryPoint dittoEntryPoint
 
 	metrics *Metrics
+	// TODO: make it more elegant. For each tx wait for the receipt
+	submittedWorkflowsCache map[common.Address]map[*big.Int]uint64
 }
 
 type Options func(*Executor)
@@ -60,6 +62,7 @@ func NewExecutor(client ethereumClient, entryPoint dittoEntryPoint, opts ...Opti
 		EntryPoint: entryPoint,
 		metrics:    NewMetrics(),
 	}
+	e.clearSubmittedWorkflowsCache()
 
 	for _, opt := range opts {
 		opt(e)
@@ -113,7 +116,7 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 
 	if !isValidExecutor {
 		log.Info("Not my turn to execute")
-
+		r.clearSubmittedWorkflowsCache()
 		return nil
 	}
 
@@ -121,18 +124,44 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 	if err != nil {
 		return fmt.Errorf("get executable workflows: %w", err)
 	}
-
 	if len(executableWorkflows) == 0 {
-		log.Info("Nothing to execute")
-
+		log.Info("No workflows met execution condition")
 		return nil
 	}
 
-	if err = r.executeWorkflows(ctx, executableWorkflows); err != nil {
+	const blocksToKeepInCache = 5
+	var filteredWorkflows []models.Workflow
+	for _, workflow := range executableWorkflows {
+		if blockNumber, ok := r.submittedWorkflowsCache[workflow.VaultAddress][workflow.WorkflowID]; ok {
+			if block.NumberU64()-blockNumber < blocksToKeepInCache {
+				continue
+			}
+		}
+		filteredWorkflows = append(filteredWorkflows, workflow)
+	}
+	log.With(
+		log.Int("executable", len(executableWorkflows)),
+		log.Int("after_filter", len(filteredWorkflows)),
+	).Info("Removed workflows already in cache")
+
+	if len(filteredWorkflows) == 0 {
+		log.Info("No workflows to execute after filtering")
+		return nil
+	}
+
+	if err = r.executeWorkflows(ctx, &executableWorkflows); err != nil {
 		return fmt.Errorf("execute workflows: %w", err)
 	}
 
-	r.metrics.CountExecutedWorkflowsAmountTotal(len(executableWorkflows))
+	for _, workflow := range executableWorkflows {
+		if r.submittedWorkflowsCache[workflow.VaultAddress] == nil {
+			r.submittedWorkflowsCache[workflow.VaultAddress] = make(map[*big.Int]uint64)
+		}
+		r.submittedWorkflowsCache[workflow.VaultAddress][workflow.WorkflowID] = block.NumberU64()
+	}
+
+	// TODO: rename, it is not executed workflows, just submitted ones
+	r.metrics.CountExecutedWorkflowsAmountTotal(len(filteredWorkflows))
 
 	return nil
 }
@@ -219,8 +248,8 @@ func hexStringToBool(hexStr string) (bool, error) {
 	return value.Cmp(big.NewInt(0)) != 0, nil
 }
 
-func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Workflow) error {
-	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, workflows)
+func (r *Executor) executeWorkflows(ctx context.Context, workflows *[]models.Workflow) error {
+	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, *workflows)
 	if err != nil {
 		return fmt.Errorf("run multiple workflows: %w", err)
 	}
@@ -229,17 +258,20 @@ func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Work
 		return fmt.Errorf("send transaction: %w", err)
 	}
 
-	log.With(log.String("tx_hash", tx.Hash().String())).Info("run multiple workflows")
-
 	log.With(
+		log.String("tx_hash", tx.Hash().String()),
 		log.Uint64("gas_used", tx.Gas()),
 		log.Uint64("gas_price", tx.GasPrice().Uint64()),
 		log.Uint64("native amount", tx.Gas()*tx.GasPrice().Uint64()),
-	).Debug("debug message")
+	).Debug("RunMultipleWorkflows")
 
 	spentAmount := new(big.Int).Mul(new(big.Int).SetUint64(tx.Gas()), tx.GasPrice())
 
 	r.metrics.CountNativeTokenSpentAmountTotal(primitives.WeiToETH(spentAmount))
 
 	return nil
+}
+
+func (r *Executor) clearSubmittedWorkflowsCache() {
+	r.submittedWorkflowsCache = make(map[common.Address]map[*big.Int]uint64)
 }

@@ -28,6 +28,7 @@ var (
 )
 
 func initRunFlags(cmd *cobra.Command) {
+	// TODO: handle these flags with cobra as well
 	cmd.Flags().StringVar(&env, "env", "dev", "Operator environment")
 	cmd.Flags().StringVar(&addr, "addr", ":8080", "Operator addr")
 	cmd.Flags().StringVar(&diagnosticsAddr, "diagnostics-addr", ":7070", "Operator diagnostics addr")
@@ -37,12 +38,12 @@ func initRunFlags(cmd *cobra.Command) {
 func Run(cfg *CommonFlags) *sync.WaitGroup {
 	service.Init(appName, env, service.WithDiagnosticsServer(diagnosticsAddr))
 
-	// adapters
 	conn, err := ethclient.Dial(cfg.NodeURL)
 	if err != nil {
 		log.With(log.Err(err)).Fatal("ether client dial error")
 	}
 
+	// adapters
 	ethClient, err := ethereum.NewClient(conn, cfg.ContractAddress, cfg.PrivateKey)
 	if err != nil {
 		log.With(log.Err(err)).Fatal("ethereum client init error")
@@ -54,6 +55,7 @@ func Run(cfg *CommonFlags) *sync.WaitGroup {
 	}
 
 	// services
+	// TODO: refactor WithMetrics passing
 	executorService := executor.NewService(executor.NewExecutor(ethClient, entryPoint, executor.WithMetrics()))
 
 	return service.RunWait(
