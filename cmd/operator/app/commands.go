@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -31,10 +32,16 @@ func setupRootCommand() *cobra.Command {
 		},
 		Run: func(_ *cobra.Command, _ []string) {},
 	}
-
 	rootCmd.PersistentFlags().StringVar(&cfg.NodeURL, "node-url", "", "URL of the blockchain node")
-	rootCmd.PersistentFlags().StringVar(&cfg.ContractAddress, "contract-addr", "", "Contract address")
+	if err := rootCmd.MarkPersistentFlagRequired("node-url"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s", err)
+	}
+	rootCmd.PersistentFlags().StringVar(&cfg.ContractAddress, "contract-addr", "", "contract address")
+	if err := rootCmd.MarkPersistentFlagRequired("contract-addr"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s", err)
+	}
 
+	// TODO: return errors from CommandFuncs, so the exit code would be non-zero in case of failure
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run executor",
@@ -44,33 +51,83 @@ func setupRootCommand() *cobra.Command {
 			wg.Wait()
 		},
 	}
+	rootCmd.AddCommand(runCmd)
 
+	setupAuxCommands(rootCmd, cfg)
+
+	return rootCmd
+}
+
+func setupAuxCommands(rootCmd *cobra.Command, cfg *CommonFlags) {
 	registerCmd := &cobra.Command{
-		Use:   "register",
-		Short: "Register executor",
-		Run: func(_ *cobra.Command, _ []string) {
-			RegisterExecutor(cfg)
+		Use:          "register",
+		Short:        "Register operator to AVS",
+		SilenceUsage: true,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return RegisterOperator(cfg)
 		},
 	}
 
-	unregisterCmd := &cobra.Command{
-		Use:   "unregister",
-		Short: "Unregister executor",
-		Run: func(_ *cobra.Command, _ []string) {
-			UnregisterExecutor(cfg)
+	deregisterCmd := &cobra.Command{
+		Use:          "deregister",
+		Short:        "Deregister operator from AVS",
+		SilenceUsage: true,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return DeregisterOperator(cfg)
+		},
+	}
+
+	setSignerCmd := &cobra.Command{
+		Use:          "set-signer",
+		Short:        "Set delegated signer for routine operations",
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			address, err := cmd.Flags().GetString("address")
+			if err != nil {
+				return fmt.Errorf("error retrieving address arg: %w", err)
+			}
+			return SetDelegatedSigner(cfg, address)
+		},
+	}
+	setSignerCmd.Flags().String("address", "", "delegated signer address")
+	if err := setSignerCmd.MarkFlagRequired("address"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s", err)
+	}
+
+	activateCmd := &cobra.Command{
+		Use:          "activate",
+		Short:        "Activate executor",
+		SilenceUsage: true,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return ActivateExecutor(cfg)
+		},
+	}
+
+	deactivateCmd := &cobra.Command{
+		Use:          "deactivate",
+		Short:        "Deactivate executor",
+		SilenceUsage: true,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return DeactivateExecutor(cfg)
 		},
 	}
 
 	arrangeExecutorsCmd := &cobra.Command{
 		Use:   "arrange",
 		Short: "Arrange executors",
-		Run: func(_ *cobra.Command, _ []string) {
-			ArrangeExecutors(cfg)
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return ArrangeExecutors(cfg)
 		},
 	}
 
-	rootCmd.AddCommand(runCmd, registerCmd, unregisterCmd, arrangeExecutorsCmd)
-	return rootCmd
+	rootCmd.AddCommand(
+		registerCmd,
+		deregisterCmd,
+		activateCmd,
+		deactivateCmd,
+		setSignerCmd,
+		arrangeExecutorsCmd,
+	)
 }
 
 func Execute() {

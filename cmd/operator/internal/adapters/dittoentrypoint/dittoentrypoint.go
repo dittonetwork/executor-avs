@@ -14,7 +14,6 @@ import (
 
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/contracts/gen/dittoentrypoint"
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
-	"github.com/dittonetwork/executor-avs/pkg/hex"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )
 
@@ -32,7 +31,7 @@ func New(ethClient *ethclient.Client, contractAddress, privateKey string) (*Ditt
 	}
 
 	var privateKeyECDSA *ecdsa.PrivateKey
-	privateKeyECDSA, err = crypto.HexToECDSA(hex.ConvertTo16Bit(privateKey))
+	privateKeyECDSA, err = crypto.HexToECDSA(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("private key hex to ECDSA: %w", err)
 	}
@@ -45,36 +44,52 @@ func New(ethClient *ethclient.Client, contractAddress, privateKey string) (*Ditt
 	}, nil
 }
 
-func (d *DittoEntryPoint) RegisterExecutor(ctx context.Context) error {
+func (d *DittoEntryPoint) ActivateExecutor(ctx context.Context) (*types.Transaction, error) {
 	opts, err := d.makeTransacOpts(ctx)
 	if err != nil {
-		return fmt.Errorf("make transac opts: %w", err)
+		return nil, fmt.Errorf("make transac opts: %w", err)
 	}
 
-	tx, err := d.dep.RegisterExecutor(opts)
+	tx, err := d.dep.ActivateExecutor(opts)
 	if err != nil {
-		return fmt.Errorf("call registerExecutor: %w", err)
+		return nil, fmt.Errorf("call ActivateExecutor: %w", err)
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().String())).Info("register as operator")
 
-	return nil
+	return tx, nil
 }
 
-func (d *DittoEntryPoint) UnregisterExecutor(ctx context.Context) error {
+func (d *DittoEntryPoint) DeactivateExecutor(ctx context.Context) (*types.Transaction, error) {
 	opts, err := d.makeTransacOpts(ctx)
 	if err != nil {
-		return fmt.Errorf("make transac opts: %w", err)
+		return nil, fmt.Errorf("make transac opts: %w", err)
 	}
 
-	tx, err := d.dep.UnregisterExecutor(opts)
+	tx, err := d.dep.DeactivateExecutor(opts)
 	if err != nil {
-		return fmt.Errorf("call registerExecutor: %w", err)
+		return nil, fmt.Errorf("call DeactivateExecutor: %w", err)
 	}
 
-	log.With(log.String("tx_hash", tx.Hash().String())).Info("unregister as operator")
+	log.With(log.String("tx_hash", tx.Hash().String())).Info("DeactivateExecutor")
 
-	return nil
+	return tx, nil
+}
+
+func (d *DittoEntryPoint) SetDelegatedSigner(ctx context.Context, signerAddress string) (*types.Transaction, error) {
+	opts, err := d.makeTransacOpts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("make transac opts: %w", err)
+	}
+
+	tx, err := d.dep.SetDelegatedSigner(opts, common.HexToAddress(signerAddress))
+	if err != nil {
+		return nil, fmt.Errorf("call SetDelegatedSigner: %w", err)
+	}
+
+	log.With(log.String("tx_hash", tx.Hash().String())).Info("SetDelegatedSigner")
+
+	return tx, nil
 }
 
 func (d *DittoEntryPoint) IsExecutor(ctx context.Context) (bool, error) {
@@ -139,11 +154,11 @@ func (d *DittoEntryPoint) GetRunWorkflowTx(ctx context.Context, vaultAddr common
 		return tx, nil
 	}
 	tx, err := d.dep.RunWorkflowWithoutRevert(&bind.TransactOpts{
-		Context:   ctx,
-		NoSend:    true,
-		GasTipCap: big.NewInt(0), // To prevent it from calling eth_maxPriorityFeePerGas
-		GasLimit:  1,             // To prevent it from calling eth_estimateGas
-		Signer:    dummySigner,   // No need to sign for simulation
+		Context: ctx,
+		NoSend:  true,
+		// GasTipCap: big.NewInt(0), // To prevent it from calling eth_maxPriorityFeePerGas
+		// GasLimit:  1,             // To prevent it from calling eth_estimateGas
+		Signer: dummySigner, // No need to sign for simulation
 	}, vaultAddr, workflowID)
 	if err != nil {
 		return nil, fmt.Errorf("call runWorkflowWithoutRevert: %w", err)
@@ -177,20 +192,20 @@ func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context, workflows []
 	return tx, nil
 }
 
-func (d *DittoEntryPoint) ArrangeExecutors(ctx context.Context) error {
+func (d *DittoEntryPoint) ArrangeExecutors(ctx context.Context) (*types.Transaction, error) {
 	opts, err := d.makeTransacOpts(ctx)
 	if err != nil {
-		return fmt.Errorf("make transac opts: %w", err)
+		return nil, fmt.Errorf("make transac opts: %w", err)
 	}
 
 	tx, err := d.dep.ArrangeExecutors(opts)
 	if err != nil {
-		return fmt.Errorf("call arrange executors: %w", err)
+		return nil, fmt.Errorf("call arrange executors: %w", err)
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().String())).Info("arrange executors")
 
-	return nil
+	return tx, nil
 }
 
 func (d *DittoEntryPoint) GetAmountExecutors(ctx context.Context) (*big.Int, error) {
@@ -200,6 +215,23 @@ func (d *DittoEntryPoint) GetAmountExecutors(ctx context.Context) (*big.Int, err
 	}
 
 	return amount, nil
+}
+
+func (d *DittoEntryPoint) CalculateOperatorAVSRegistrationDigestHash(
+	ctx context.Context,
+	address common.Address,
+	salt [32]byte,
+	expiry *big.Int,
+) ([32]byte, error) {
+	opts := &bind.CallOpts{
+		Context: ctx,
+	}
+	stringToSign, err := d.dep.CalculateOperatorAVSRegistrationDigestHash(opts, address, salt, expiry)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf("call CalculateOperatorAVSRegistrationDigestHash: %w", err)
+	}
+
+	return stringToSign, nil
 }
 
 func (d *DittoEntryPoint) makeTransacOpts(ctx context.Context) (*bind.TransactOpts, error) {

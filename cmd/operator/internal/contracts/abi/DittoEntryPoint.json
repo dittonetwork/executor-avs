@@ -1,10 +1,46 @@
 [
   {
     "type": "function",
+    "name": "activateExecutor",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "arrangeExecutors",
     "inputs": [],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "calculateOperatorAVSRegistrationDigestHash",
+    "inputs": [
+      {
+        "name": "operator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "salt",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "expiry",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -45,6 +81,13 @@
         "internalType": "uint256"
       }
     ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "deactivateExecutor",
+    "inputs": [],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -137,6 +180,25 @@
   },
   {
     "type": "function",
+    "name": "getAssignedOperator",
+    "inputs": [
+      {
+        "name": "delegatedSigner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getSeedExternal",
     "inputs": [
       {
@@ -208,13 +270,6 @@
       }
     ],
     "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "registerExecutor",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -309,6 +364,19 @@
   },
   {
     "type": "function",
+    "name": "setDelegatedSigner",
+    "inputs": [
+      {
+        "name": "newDelegatedSigner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setParams",
     "inputs": [
       {
@@ -361,15 +429,13 @@
         "name": "delegateManager",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "strategyManager",
+        "type": "address",
+        "internalType": "address"
       }
     ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "unregisterExecutor",
-    "inputs": [],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -399,7 +465,7 @@
       {
         "name": "executor",
         "type": "address",
-        "indexed": false,
+        "indexed": true,
         "internalType": "address"
       }
     ],
@@ -412,7 +478,7 @@
       {
         "name": "executor",
         "type": "address",
-        "indexed": false,
+        "indexed": true,
         "internalType": "address"
       }
     ],

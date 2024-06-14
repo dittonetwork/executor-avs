@@ -80,4 +80,4 @@ go-lint:
 	golangci-lint run ./...
 
 abi-gen:
-	abigen --abi=./contracts/abi/dittoentrypoint/DittoEntryPoint.json --pkg=dittoentrypoint --out=./contracts/gen/dittoentrypoint/dittoentrypoint.go
+	go generate ./cmd/operator/internal/contracts

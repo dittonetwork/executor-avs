@@ -37,7 +37,7 @@ type IDittoEntryPointWorkflow struct {
 
 // DittoentrypointMetaData contains all meta data concerning the Dittoentrypoint contract.
 var DittoentrypointMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"arrangeExecutors\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"canExecWorkflowCheck\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"gasPrice\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelWorkflow\",\"inputs\":[{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getActiveWorkflows\",\"inputs\":[{\"name\":\"from\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"to\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"pageWorkflows\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllActiveWorkflows\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAmountActiveWorkflows\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAmountExecutors\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSeedExternal\",\"inputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"seed\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_protocolFees\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isExecutor\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isValidExecutor\",\"inputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"executorAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerExecutor\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registerWorkflow\",\"inputs\":[{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runMultipleWorkflows\",\"inputs\":[{\"name\":\"workflows\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"bool[]\",\"internalType\":\"bool[]\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runWorkflowWithRevert\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runWorkflowWithoutRevert\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setParams\",\"inputs\":[{\"name\":\"blockSlotSizeNext\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"epochSizeNext\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setProtocolFees\",\"inputs\":[{\"name\":\"_protocolFees\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"startParamsInit\",\"inputs\":[{\"name\":\"blockSlotSize\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"epochSize\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"strategy\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"delegateManager\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unregisterExecutor\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"DittoEntryPointCancelWorkflow\",\"inputs\":[{\"name\":\"vault\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DittoEntryPointExecuterRegister\",\"inputs\":[{\"name\":\"executor\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DittoEntryPointExecuterUnregister\",\"inputs\":[{\"name\":\"executor\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DittoEntryPointRegisterWorkflow\",\"inputs\":[{\"name\":\"vault\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"DittoEntryPoint_AlreadyInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DittoEntryPoint_AlreadyStartParamsInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DittoEntryPoint_WorkflowReverted\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"activateExecutor\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"arrangeExecutors\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"calculateOperatorAVSRegistrationDigestHash\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"canExecWorkflowCheck\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"gasPrice\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelWorkflow\",\"inputs\":[{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"deactivateExecutor\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getActiveWorkflows\",\"inputs\":[{\"name\":\"from\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"to\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"pageWorkflows\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAllActiveWorkflows\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAmountActiveWorkflows\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAmountExecutors\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAssignedOperator\",\"inputs\":[{\"name\":\"delegatedSigner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getSeedExternal\",\"inputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"seed\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_protocolFees\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isExecutor\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isValidExecutor\",\"inputs\":[{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"executorAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerWorkflow\",\"inputs\":[{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runMultipleWorkflows\",\"inputs\":[{\"name\":\"workflows\",\"type\":\"tuple[]\",\"internalType\":\"structIDittoEntryPoint.Workflow[]\",\"components\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"bool[]\",\"internalType\":\"bool[]\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runWorkflowWithRevert\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"runWorkflowWithoutRevert\",\"inputs\":[{\"name\":\"vaultAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setDelegatedSigner\",\"inputs\":[{\"name\":\"newDelegatedSigner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setParams\",\"inputs\":[{\"name\":\"blockSlotSizeNext\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"epochSizeNext\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setProtocolFees\",\"inputs\":[{\"name\":\"_protocolFees\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"startParamsInit\",\"inputs\":[{\"name\":\"blockSlotSize\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"epochSize\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"strategy\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"delegateManager\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"strategyManager\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"DittoEntryPointCancelWorkflow\",\"inputs\":[{\"name\":\"vault\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DittoEntryPointExecuterRegister\",\"inputs\":[{\"name\":\"executor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DittoEntryPointExecuterUnregister\",\"inputs\":[{\"name\":\"executor\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DittoEntryPointRegisterWorkflow\",\"inputs\":[{\"name\":\"vault\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"workflowId\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"DittoEntryPoint_AlreadyInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DittoEntryPoint_AlreadyStartParamsInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DittoEntryPoint_WorkflowReverted\",\"inputs\":[]}]",
 }
 
 // DittoentrypointABI is the input ABI used to generate the binding from.
@@ -184,6 +184,37 @@ func (_Dittoentrypoint *DittoentrypointTransactorRaw) Transfer(opts *bind.Transa
 // Transact invokes the (paid) contract method with params as input values.
 func (_Dittoentrypoint *DittoentrypointTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
 	return _Dittoentrypoint.Contract.contract.Transact(opts, method, params...)
+}
+
+// CalculateOperatorAVSRegistrationDigestHash is a free data retrieval call binding the contract method 0x8b82bf49.
+//
+// Solidity: function calculateOperatorAVSRegistrationDigestHash(address operator, bytes32 salt, uint256 expiry) view returns(bytes32)
+func (_Dittoentrypoint *DittoentrypointCaller) CalculateOperatorAVSRegistrationDigestHash(opts *bind.CallOpts, operator common.Address, salt [32]byte, expiry *big.Int) ([32]byte, error) {
+	var out []interface{}
+	err := _Dittoentrypoint.contract.Call(opts, &out, "calculateOperatorAVSRegistrationDigestHash", operator, salt, expiry)
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// CalculateOperatorAVSRegistrationDigestHash is a free data retrieval call binding the contract method 0x8b82bf49.
+//
+// Solidity: function calculateOperatorAVSRegistrationDigestHash(address operator, bytes32 salt, uint256 expiry) view returns(bytes32)
+func (_Dittoentrypoint *DittoentrypointSession) CalculateOperatorAVSRegistrationDigestHash(operator common.Address, salt [32]byte, expiry *big.Int) ([32]byte, error) {
+	return _Dittoentrypoint.Contract.CalculateOperatorAVSRegistrationDigestHash(&_Dittoentrypoint.CallOpts, operator, salt, expiry)
+}
+
+// CalculateOperatorAVSRegistrationDigestHash is a free data retrieval call binding the contract method 0x8b82bf49.
+//
+// Solidity: function calculateOperatorAVSRegistrationDigestHash(address operator, bytes32 salt, uint256 expiry) view returns(bytes32)
+func (_Dittoentrypoint *DittoentrypointCallerSession) CalculateOperatorAVSRegistrationDigestHash(operator common.Address, salt [32]byte, expiry *big.Int) ([32]byte, error) {
+	return _Dittoentrypoint.Contract.CalculateOperatorAVSRegistrationDigestHash(&_Dittoentrypoint.CallOpts, operator, salt, expiry)
 }
 
 // CanExecWorkflowCheck is a free data retrieval call binding the contract method 0x39b2afd4.
@@ -341,6 +372,37 @@ func (_Dittoentrypoint *DittoentrypointCallerSession) GetAmountExecutors() (*big
 	return _Dittoentrypoint.Contract.GetAmountExecutors(&_Dittoentrypoint.CallOpts)
 }
 
+// GetAssignedOperator is a free data retrieval call binding the contract method 0xe1a3fc74.
+//
+// Solidity: function getAssignedOperator(address delegatedSigner) view returns(address)
+func (_Dittoentrypoint *DittoentrypointCaller) GetAssignedOperator(opts *bind.CallOpts, delegatedSigner common.Address) (common.Address, error) {
+	var out []interface{}
+	err := _Dittoentrypoint.contract.Call(opts, &out, "getAssignedOperator", delegatedSigner)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetAssignedOperator is a free data retrieval call binding the contract method 0xe1a3fc74.
+//
+// Solidity: function getAssignedOperator(address delegatedSigner) view returns(address)
+func (_Dittoentrypoint *DittoentrypointSession) GetAssignedOperator(delegatedSigner common.Address) (common.Address, error) {
+	return _Dittoentrypoint.Contract.GetAssignedOperator(&_Dittoentrypoint.CallOpts, delegatedSigner)
+}
+
+// GetAssignedOperator is a free data retrieval call binding the contract method 0xe1a3fc74.
+//
+// Solidity: function getAssignedOperator(address delegatedSigner) view returns(address)
+func (_Dittoentrypoint *DittoentrypointCallerSession) GetAssignedOperator(delegatedSigner common.Address) (common.Address, error) {
+	return _Dittoentrypoint.Contract.GetAssignedOperator(&_Dittoentrypoint.CallOpts, delegatedSigner)
+}
+
 // GetSeedExternal is a free data retrieval call binding the contract method 0x8063f630.
 //
 // Solidity: function getSeedExternal(uint256 blockNumber) view returns(uint256 seed)
@@ -434,6 +496,27 @@ func (_Dittoentrypoint *DittoentrypointCallerSession) IsValidExecutor(blockNumbe
 	return _Dittoentrypoint.Contract.IsValidExecutor(&_Dittoentrypoint.CallOpts, blockNumber, executorAddress)
 }
 
+// ActivateExecutor is a paid mutator transaction binding the contract method 0x4a1258ec.
+//
+// Solidity: function activateExecutor() returns()
+func (_Dittoentrypoint *DittoentrypointTransactor) ActivateExecutor(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _Dittoentrypoint.contract.Transact(opts, "activateExecutor")
+}
+
+// ActivateExecutor is a paid mutator transaction binding the contract method 0x4a1258ec.
+//
+// Solidity: function activateExecutor() returns()
+func (_Dittoentrypoint *DittoentrypointSession) ActivateExecutor() (*types.Transaction, error) {
+	return _Dittoentrypoint.Contract.ActivateExecutor(&_Dittoentrypoint.TransactOpts)
+}
+
+// ActivateExecutor is a paid mutator transaction binding the contract method 0x4a1258ec.
+//
+// Solidity: function activateExecutor() returns()
+func (_Dittoentrypoint *DittoentrypointTransactorSession) ActivateExecutor() (*types.Transaction, error) {
+	return _Dittoentrypoint.Contract.ActivateExecutor(&_Dittoentrypoint.TransactOpts)
+}
+
 // ArrangeExecutors is a paid mutator transaction binding the contract method 0x92052498.
 //
 // Solidity: function arrangeExecutors() returns()
@@ -476,6 +559,27 @@ func (_Dittoentrypoint *DittoentrypointTransactorSession) CancelWorkflow(workflo
 	return _Dittoentrypoint.Contract.CancelWorkflow(&_Dittoentrypoint.TransactOpts, workflowId)
 }
 
+// DeactivateExecutor is a paid mutator transaction binding the contract method 0x8b7b985c.
+//
+// Solidity: function deactivateExecutor() returns()
+func (_Dittoentrypoint *DittoentrypointTransactor) DeactivateExecutor(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _Dittoentrypoint.contract.Transact(opts, "deactivateExecutor")
+}
+
+// DeactivateExecutor is a paid mutator transaction binding the contract method 0x8b7b985c.
+//
+// Solidity: function deactivateExecutor() returns()
+func (_Dittoentrypoint *DittoentrypointSession) DeactivateExecutor() (*types.Transaction, error) {
+	return _Dittoentrypoint.Contract.DeactivateExecutor(&_Dittoentrypoint.TransactOpts)
+}
+
+// DeactivateExecutor is a paid mutator transaction binding the contract method 0x8b7b985c.
+//
+// Solidity: function deactivateExecutor() returns()
+func (_Dittoentrypoint *DittoentrypointTransactorSession) DeactivateExecutor() (*types.Transaction, error) {
+	return _Dittoentrypoint.Contract.DeactivateExecutor(&_Dittoentrypoint.TransactOpts)
+}
+
 // Initialize is a paid mutator transaction binding the contract method 0x485cc955.
 //
 // Solidity: function initialize(address newOwner, address _protocolFees) returns()
@@ -495,27 +599,6 @@ func (_Dittoentrypoint *DittoentrypointSession) Initialize(newOwner common.Addre
 // Solidity: function initialize(address newOwner, address _protocolFees) returns()
 func (_Dittoentrypoint *DittoentrypointTransactorSession) Initialize(newOwner common.Address, _protocolFees common.Address) (*types.Transaction, error) {
 	return _Dittoentrypoint.Contract.Initialize(&_Dittoentrypoint.TransactOpts, newOwner, _protocolFees)
-}
-
-// RegisterExecutor is a paid mutator transaction binding the contract method 0x2afabb98.
-//
-// Solidity: function registerExecutor() returns()
-func (_Dittoentrypoint *DittoentrypointTransactor) RegisterExecutor(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Dittoentrypoint.contract.Transact(opts, "registerExecutor")
-}
-
-// RegisterExecutor is a paid mutator transaction binding the contract method 0x2afabb98.
-//
-// Solidity: function registerExecutor() returns()
-func (_Dittoentrypoint *DittoentrypointSession) RegisterExecutor() (*types.Transaction, error) {
-	return _Dittoentrypoint.Contract.RegisterExecutor(&_Dittoentrypoint.TransactOpts)
-}
-
-// RegisterExecutor is a paid mutator transaction binding the contract method 0x2afabb98.
-//
-// Solidity: function registerExecutor() returns()
-func (_Dittoentrypoint *DittoentrypointTransactorSession) RegisterExecutor() (*types.Transaction, error) {
-	return _Dittoentrypoint.Contract.RegisterExecutor(&_Dittoentrypoint.TransactOpts)
 }
 
 // RegisterWorkflow is a paid mutator transaction binding the contract method 0xa61f676b.
@@ -602,6 +685,27 @@ func (_Dittoentrypoint *DittoentrypointTransactorSession) RunWorkflowWithoutReve
 	return _Dittoentrypoint.Contract.RunWorkflowWithoutRevert(&_Dittoentrypoint.TransactOpts, vaultAddress, workflowId)
 }
 
+// SetDelegatedSigner is a paid mutator transaction binding the contract method 0x53863613.
+//
+// Solidity: function setDelegatedSigner(address newDelegatedSigner) returns()
+func (_Dittoentrypoint *DittoentrypointTransactor) SetDelegatedSigner(opts *bind.TransactOpts, newDelegatedSigner common.Address) (*types.Transaction, error) {
+	return _Dittoentrypoint.contract.Transact(opts, "setDelegatedSigner", newDelegatedSigner)
+}
+
+// SetDelegatedSigner is a paid mutator transaction binding the contract method 0x53863613.
+//
+// Solidity: function setDelegatedSigner(address newDelegatedSigner) returns()
+func (_Dittoentrypoint *DittoentrypointSession) SetDelegatedSigner(newDelegatedSigner common.Address) (*types.Transaction, error) {
+	return _Dittoentrypoint.Contract.SetDelegatedSigner(&_Dittoentrypoint.TransactOpts, newDelegatedSigner)
+}
+
+// SetDelegatedSigner is a paid mutator transaction binding the contract method 0x53863613.
+//
+// Solidity: function setDelegatedSigner(address newDelegatedSigner) returns()
+func (_Dittoentrypoint *DittoentrypointTransactorSession) SetDelegatedSigner(newDelegatedSigner common.Address) (*types.Transaction, error) {
+	return _Dittoentrypoint.Contract.SetDelegatedSigner(&_Dittoentrypoint.TransactOpts, newDelegatedSigner)
+}
+
 // SetParams is a paid mutator transaction binding the contract method 0xc0324c77.
 //
 // Solidity: function setParams(uint256 blockSlotSizeNext, uint256 epochSizeNext) returns()
@@ -644,46 +748,25 @@ func (_Dittoentrypoint *DittoentrypointTransactorSession) SetProtocolFees(_proto
 	return _Dittoentrypoint.Contract.SetProtocolFees(&_Dittoentrypoint.TransactOpts, _protocolFees)
 }
 
-// StartParamsInit is a paid mutator transaction binding the contract method 0x05ce8c4d.
+// StartParamsInit is a paid mutator transaction binding the contract method 0x7296c803.
 //
-// Solidity: function startParamsInit(uint256 blockSlotSize, uint256 epochSize, address strategy, address delegateManager) returns()
-func (_Dittoentrypoint *DittoentrypointTransactor) StartParamsInit(opts *bind.TransactOpts, blockSlotSize *big.Int, epochSize *big.Int, strategy common.Address, delegateManager common.Address) (*types.Transaction, error) {
-	return _Dittoentrypoint.contract.Transact(opts, "startParamsInit", blockSlotSize, epochSize, strategy, delegateManager)
+// Solidity: function startParamsInit(uint256 blockSlotSize, uint256 epochSize, address strategy, address delegateManager, address strategyManager) returns()
+func (_Dittoentrypoint *DittoentrypointTransactor) StartParamsInit(opts *bind.TransactOpts, blockSlotSize *big.Int, epochSize *big.Int, strategy common.Address, delegateManager common.Address, strategyManager common.Address) (*types.Transaction, error) {
+	return _Dittoentrypoint.contract.Transact(opts, "startParamsInit", blockSlotSize, epochSize, strategy, delegateManager, strategyManager)
 }
 
-// StartParamsInit is a paid mutator transaction binding the contract method 0x05ce8c4d.
+// StartParamsInit is a paid mutator transaction binding the contract method 0x7296c803.
 //
-// Solidity: function startParamsInit(uint256 blockSlotSize, uint256 epochSize, address strategy, address delegateManager) returns()
-func (_Dittoentrypoint *DittoentrypointSession) StartParamsInit(blockSlotSize *big.Int, epochSize *big.Int, strategy common.Address, delegateManager common.Address) (*types.Transaction, error) {
-	return _Dittoentrypoint.Contract.StartParamsInit(&_Dittoentrypoint.TransactOpts, blockSlotSize, epochSize, strategy, delegateManager)
+// Solidity: function startParamsInit(uint256 blockSlotSize, uint256 epochSize, address strategy, address delegateManager, address strategyManager) returns()
+func (_Dittoentrypoint *DittoentrypointSession) StartParamsInit(blockSlotSize *big.Int, epochSize *big.Int, strategy common.Address, delegateManager common.Address, strategyManager common.Address) (*types.Transaction, error) {
+	return _Dittoentrypoint.Contract.StartParamsInit(&_Dittoentrypoint.TransactOpts, blockSlotSize, epochSize, strategy, delegateManager, strategyManager)
 }
 
-// StartParamsInit is a paid mutator transaction binding the contract method 0x05ce8c4d.
+// StartParamsInit is a paid mutator transaction binding the contract method 0x7296c803.
 //
-// Solidity: function startParamsInit(uint256 blockSlotSize, uint256 epochSize, address strategy, address delegateManager) returns()
-func (_Dittoentrypoint *DittoentrypointTransactorSession) StartParamsInit(blockSlotSize *big.Int, epochSize *big.Int, strategy common.Address, delegateManager common.Address) (*types.Transaction, error) {
-	return _Dittoentrypoint.Contract.StartParamsInit(&_Dittoentrypoint.TransactOpts, blockSlotSize, epochSize, strategy, delegateManager)
-}
-
-// UnregisterExecutor is a paid mutator transaction binding the contract method 0x868a660f.
-//
-// Solidity: function unregisterExecutor() returns()
-func (_Dittoentrypoint *DittoentrypointTransactor) UnregisterExecutor(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Dittoentrypoint.contract.Transact(opts, "unregisterExecutor")
-}
-
-// UnregisterExecutor is a paid mutator transaction binding the contract method 0x868a660f.
-//
-// Solidity: function unregisterExecutor() returns()
-func (_Dittoentrypoint *DittoentrypointSession) UnregisterExecutor() (*types.Transaction, error) {
-	return _Dittoentrypoint.Contract.UnregisterExecutor(&_Dittoentrypoint.TransactOpts)
-}
-
-// UnregisterExecutor is a paid mutator transaction binding the contract method 0x868a660f.
-//
-// Solidity: function unregisterExecutor() returns()
-func (_Dittoentrypoint *DittoentrypointTransactorSession) UnregisterExecutor() (*types.Transaction, error) {
-	return _Dittoentrypoint.Contract.UnregisterExecutor(&_Dittoentrypoint.TransactOpts)
+// Solidity: function startParamsInit(uint256 blockSlotSize, uint256 epochSize, address strategy, address delegateManager, address strategyManager) returns()
+func (_Dittoentrypoint *DittoentrypointTransactorSession) StartParamsInit(blockSlotSize *big.Int, epochSize *big.Int, strategy common.Address, delegateManager common.Address, strategyManager common.Address) (*types.Transaction, error) {
+	return _Dittoentrypoint.Contract.StartParamsInit(&_Dittoentrypoint.TransactOpts, blockSlotSize, epochSize, strategy, delegateManager, strategyManager)
 }
 
 // DittoentrypointDittoEntryPointCancelWorkflowIterator is returned from FilterDittoEntryPointCancelWorkflow and is used to iterate over the raw logs and unpacked data for DittoEntryPointCancelWorkflow events raised by the Dittoentrypoint contract.
@@ -906,10 +989,15 @@ type DittoentrypointDittoEntryPointExecuterRegister struct {
 
 // FilterDittoEntryPointExecuterRegister is a free log retrieval operation binding the contract event 0xe16d378d46c890b88b378d2ef260e841dc24ec60fc189be6e991fc540dca12c9.
 //
-// Solidity: event DittoEntryPointExecuterRegister(address executor)
-func (_Dittoentrypoint *DittoentrypointFilterer) FilterDittoEntryPointExecuterRegister(opts *bind.FilterOpts) (*DittoentrypointDittoEntryPointExecuterRegisterIterator, error) {
+// Solidity: event DittoEntryPointExecuterRegister(address indexed executor)
+func (_Dittoentrypoint *DittoentrypointFilterer) FilterDittoEntryPointExecuterRegister(opts *bind.FilterOpts, executor []common.Address) (*DittoentrypointDittoEntryPointExecuterRegisterIterator, error) {
 
-	logs, sub, err := _Dittoentrypoint.contract.FilterLogs(opts, "DittoEntryPointExecuterRegister")
+	var executorRule []interface{}
+	for _, executorItem := range executor {
+		executorRule = append(executorRule, executorItem)
+	}
+
+	logs, sub, err := _Dittoentrypoint.contract.FilterLogs(opts, "DittoEntryPointExecuterRegister", executorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -918,10 +1006,15 @@ func (_Dittoentrypoint *DittoentrypointFilterer) FilterDittoEntryPointExecuterRe
 
 // WatchDittoEntryPointExecuterRegister is a free log subscription operation binding the contract event 0xe16d378d46c890b88b378d2ef260e841dc24ec60fc189be6e991fc540dca12c9.
 //
-// Solidity: event DittoEntryPointExecuterRegister(address executor)
-func (_Dittoentrypoint *DittoentrypointFilterer) WatchDittoEntryPointExecuterRegister(opts *bind.WatchOpts, sink chan<- *DittoentrypointDittoEntryPointExecuterRegister) (event.Subscription, error) {
+// Solidity: event DittoEntryPointExecuterRegister(address indexed executor)
+func (_Dittoentrypoint *DittoentrypointFilterer) WatchDittoEntryPointExecuterRegister(opts *bind.WatchOpts, sink chan<- *DittoentrypointDittoEntryPointExecuterRegister, executor []common.Address) (event.Subscription, error) {
 
-	logs, sub, err := _Dittoentrypoint.contract.WatchLogs(opts, "DittoEntryPointExecuterRegister")
+	var executorRule []interface{}
+	for _, executorItem := range executor {
+		executorRule = append(executorRule, executorItem)
+	}
+
+	logs, sub, err := _Dittoentrypoint.contract.WatchLogs(opts, "DittoEntryPointExecuterRegister", executorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -955,7 +1048,7 @@ func (_Dittoentrypoint *DittoentrypointFilterer) WatchDittoEntryPointExecuterReg
 
 // ParseDittoEntryPointExecuterRegister is a log parse operation binding the contract event 0xe16d378d46c890b88b378d2ef260e841dc24ec60fc189be6e991fc540dca12c9.
 //
-// Solidity: event DittoEntryPointExecuterRegister(address executor)
+// Solidity: event DittoEntryPointExecuterRegister(address indexed executor)
 func (_Dittoentrypoint *DittoentrypointFilterer) ParseDittoEntryPointExecuterRegister(log types.Log) (*DittoentrypointDittoEntryPointExecuterRegister, error) {
 	event := new(DittoentrypointDittoEntryPointExecuterRegister)
 	if err := _Dittoentrypoint.contract.UnpackLog(event, "DittoEntryPointExecuterRegister", log); err != nil {
@@ -1040,10 +1133,15 @@ type DittoentrypointDittoEntryPointExecuterUnregister struct {
 
 // FilterDittoEntryPointExecuterUnregister is a free log retrieval operation binding the contract event 0xca999231fc65bf68e10375fc21ab441f4f58421c91854effcb9707f479efffb0.
 //
-// Solidity: event DittoEntryPointExecuterUnregister(address executor)
-func (_Dittoentrypoint *DittoentrypointFilterer) FilterDittoEntryPointExecuterUnregister(opts *bind.FilterOpts) (*DittoentrypointDittoEntryPointExecuterUnregisterIterator, error) {
+// Solidity: event DittoEntryPointExecuterUnregister(address indexed executor)
+func (_Dittoentrypoint *DittoentrypointFilterer) FilterDittoEntryPointExecuterUnregister(opts *bind.FilterOpts, executor []common.Address) (*DittoentrypointDittoEntryPointExecuterUnregisterIterator, error) {
 
-	logs, sub, err := _Dittoentrypoint.contract.FilterLogs(opts, "DittoEntryPointExecuterUnregister")
+	var executorRule []interface{}
+	for _, executorItem := range executor {
+		executorRule = append(executorRule, executorItem)
+	}
+
+	logs, sub, err := _Dittoentrypoint.contract.FilterLogs(opts, "DittoEntryPointExecuterUnregister", executorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1052,10 +1150,15 @@ func (_Dittoentrypoint *DittoentrypointFilterer) FilterDittoEntryPointExecuterUn
 
 // WatchDittoEntryPointExecuterUnregister is a free log subscription operation binding the contract event 0xca999231fc65bf68e10375fc21ab441f4f58421c91854effcb9707f479efffb0.
 //
-// Solidity: event DittoEntryPointExecuterUnregister(address executor)
-func (_Dittoentrypoint *DittoentrypointFilterer) WatchDittoEntryPointExecuterUnregister(opts *bind.WatchOpts, sink chan<- *DittoentrypointDittoEntryPointExecuterUnregister) (event.Subscription, error) {
+// Solidity: event DittoEntryPointExecuterUnregister(address indexed executor)
+func (_Dittoentrypoint *DittoentrypointFilterer) WatchDittoEntryPointExecuterUnregister(opts *bind.WatchOpts, sink chan<- *DittoentrypointDittoEntryPointExecuterUnregister, executor []common.Address) (event.Subscription, error) {
 
-	logs, sub, err := _Dittoentrypoint.contract.WatchLogs(opts, "DittoEntryPointExecuterUnregister")
+	var executorRule []interface{}
+	for _, executorItem := range executor {
+		executorRule = append(executorRule, executorItem)
+	}
+
+	logs, sub, err := _Dittoentrypoint.contract.WatchLogs(opts, "DittoEntryPointExecuterUnregister", executorRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1089,7 +1192,7 @@ func (_Dittoentrypoint *DittoentrypointFilterer) WatchDittoEntryPointExecuterUnr
 
 // ParseDittoEntryPointExecuterUnregister is a log parse operation binding the contract event 0xca999231fc65bf68e10375fc21ab441f4f58421c91854effcb9707f479efffb0.
 //
-// Solidity: event DittoEntryPointExecuterUnregister(address executor)
+// Solidity: event DittoEntryPointExecuterUnregister(address indexed executor)
 func (_Dittoentrypoint *DittoentrypointFilterer) ParseDittoEntryPointExecuterUnregister(log types.Log) (*DittoentrypointDittoEntryPointExecuterUnregister, error) {
 	event := new(DittoentrypointDittoEntryPointExecuterUnregister)
 	if err := _Dittoentrypoint.contract.UnpackLog(event, "DittoEntryPointExecuterUnregister", log); err != nil {
