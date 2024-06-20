@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	portdep "github.com/dittonetwork/executor-avs/cmd/operator/internal/ports/dep"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -153,15 +154,20 @@ func (d *DittoEntryPoint) GetRunWorkflowTx(ctx context.Context, vaultAddr common
 	dummySigner := func(_ common.Address, tx *types.Transaction) (*types.Transaction, error) {
 		return tx, nil
 	}
-	tx, err := d.dep.RunWorkflowWithoutRevert(&bind.TransactOpts{
+	tx, err := d.dep.RunWorkflowWithRevert(&bind.TransactOpts{
 		Context: ctx,
 		NoSend:  true,
+		From:    crypto.PubkeyToAddress(d.privateKey.PublicKey),
 		// GasTipCap: big.NewInt(0), // To prevent it from calling eth_maxPriorityFeePerGas
 		// GasLimit:  1,             // To prevent it from calling eth_estimateGas
 		Signer: dummySigner, // No need to sign for simulation
 	}, vaultAddr, workflowID)
 	if err != nil {
-		return nil, fmt.Errorf("call runWorkflowWithoutRevert: %w", err)
+		if err.Error() == "execution reverted" {
+			return nil, portdep.ErrExecutionReverted
+		}
+
+		return nil, fmt.Errorf("call runWorkflowWithRevert: %w", err)
 	}
 
 	return tx, nil
