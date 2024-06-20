@@ -18,6 +18,11 @@ else
 	CGO_ENABLED := 0
 endif
 
+.PHONY: toolchain
+toolchain:
+	go install github.com/vektra/mockery/v2@v2.43.2
+	go install github.com/mailru/easyjson/...@v0.7.7
+
 # ------------------------------------------------------------------------------
 # Functions
 # ------------------------------------------------------------------------------

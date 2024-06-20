@@ -18,6 +18,8 @@ import (
 type executor interface {
 	SubscribeToNewBlocks(ctx context.Context) (chan *types.Header, ethereum.Subscription, error)
 	Handle(ctx context.Context, blockHash common.Hash) error
+	Deactivate(ctx context.Context) error
+	Activate(ctx context.Context) error
 }
 
 type Service struct {
@@ -62,6 +64,13 @@ func (s *Service) start() {
 	log.Info("starting executor")
 	s.status = api.ServiceStatusTypeActive
 
+	go func() {
+		err := s.executor.Activate(ctx)
+		if err != nil {
+			log.With(log.Err(err)).Fatal("activate executor")
+		}
+	}()
+
 	blocks, sub, err := s.executor.SubscribeToNewBlocks(ctx)
 	if err != nil {
 		log.With(log.Err(err)).Fatal("subscribe to new blocks")
@@ -95,6 +104,11 @@ func (s *Service) HandleBlock(ctx context.Context, blockHash common.Hash) error 
 
 func (s *Service) Stop() {
 	log.Info("stopping the executor service...")
+
+	err := s.executor.Deactivate(context.Background())
+	if err != nil {
+		log.With(log.Err(err)).Error("deactivate executor")
+	}
 
 	s.isShuttingDown = true
 	<-s.done
