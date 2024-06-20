@@ -53,7 +53,6 @@ func Run(cfg *CommonFlags) *sync.WaitGroup {
 	if err != nil {
 		log.With(log.Err(err)).Fatal("dittoentrypoint init error")
 	}
-
 	// services
 	// TODO: refactor WithMetrics passing
 	executorService := executor.NewService(executor.NewExecutor(ethClient, entryPoint, executor.WithMetrics()))

@@ -7,7 +7,7 @@ import (
 	"math/big"
 
 	"github.com/dittonetwork/executor-avs/pkg/log"
-	"github.com/ethereum/go-ethereum"
+	geth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -34,7 +34,7 @@ func NewClient(client *ethclient.Client, contractAddr, privateKey string) (*Clie
 	}, nil
 }
 
-func (c *Client) SubscribeNewHead(ctx context.Context) (chan *types.Header, ethereum.Subscription, error) {
+func (c *Client) SubscribeNewHead(ctx context.Context) (chan *types.Header, geth.Subscription, error) {
 	headers := make(chan *types.Header)
 	subscription, err := c.client.SubscribeNewHead(ctx, headers)
 	if err != nil {
@@ -81,4 +81,8 @@ func (c *Client) GetBalance(ctx context.Context) (*big.Int, error) {
 	}
 
 	return balance, nil
+}
+
+func (c *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+	return c.client.TransactionReceipt(ctx, txHash)
 }

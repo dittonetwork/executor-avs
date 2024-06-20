@@ -20,6 +20,7 @@ func TestService_GracefulShutdown(t *testing.T) {
 
 	executorHandler := mocks.NewExecutor(t)
 	executorHandler.EXPECT().Handle(ctx, blockHash).Return(ErrUnregisteredExecutor)
+	executorHandler.EXPECT().Deactivate(ctx).Return(nil)
 
 	service := NewService(executorHandler)
 	service.status = api.ServiceStatusTypeActive

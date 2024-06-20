@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
@@ -27,6 +28,7 @@ type ethereumClient interface {
 	SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (string, error)
 	SendTransaction(ctx context.Context, tx *types.Transaction) error
 	GetBalance(ctx context.Context) (*big.Int, error)
+	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
 }
 
 //go:generate mockery --name dittoEntryPoint --output ./mocks --outpkg mocks
@@ -36,6 +38,8 @@ type dittoEntryPoint interface {
 	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
 	GetRunWorkflowTx(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (*types.Transaction, error)
 	RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow) (*types.Transaction, error)
+	DeactivateExecutor(ctx context.Context) (*types.Transaction, error)
+	ActivateExecutor(ctx context.Context) (*types.Transaction, error)
 }
 
 type Executor struct {
@@ -83,6 +87,58 @@ func (r *Executor) Handle(ctx context.Context, blockHash common.Hash) error {
 	}
 
 	return nil
+}
+
+func (r *Executor) Activate(ctx context.Context) error {
+	if isExecutor, err := r.EntryPoint.IsExecutor(ctx); err != nil {
+		return fmt.Errorf("check if is executor: %w", err)
+	} else if isExecutor {
+		log.Info("Executor is already activated")
+		return nil
+	}
+
+	tx, err := r.EntryPoint.ActivateExecutor(ctx)
+	if err != nil {
+		return fmt.Errorf("activate executor: %w", err)
+	}
+
+	log.With(log.String("tx_hash", tx.Hash().Hex())).Info("Activate transaction created")
+
+	r.waitForTransaction(ctx, tx)
+
+	return nil
+}
+
+func (r *Executor) Deactivate(ctx context.Context) error {
+	tx, err := r.EntryPoint.DeactivateExecutor(ctx)
+	if err != nil {
+		return fmt.Errorf("deactivate executor: %w", err)
+	}
+
+	log.With(log.String("tx_hash", tx.Hash().Hex())).Info("Deactivate transaction created")
+
+	r.waitForTransaction(ctx, tx)
+
+	return nil
+}
+
+func (r *Executor) waitForTransaction(_ context.Context, tx *types.Transaction) {
+	const pollIntervalSecs = 5
+
+	log.Info("Waiting for transaction to complete...")
+	for {
+		receipt, err := r.Client.TransactionReceipt(context.Background(), tx.Hash())
+		if receipt != nil {
+			log.With(
+				log.String("tx_hash", receipt.TxHash.Hex()),
+				log.String("block_hash", receipt.BlockHash.Hex()),
+			).Info("Transaction included into block ")
+		}
+		if err != nil {
+			log.Info("Transaction receipt not available yet, waiting...")
+			time.Sleep(pollIntervalSecs * time.Second)
+		}
+	}
 }
 
 func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
