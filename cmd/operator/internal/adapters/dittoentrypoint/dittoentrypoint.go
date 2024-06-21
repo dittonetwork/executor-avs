@@ -4,8 +4,9 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	portdep "github.com/dittonetwork/executor-avs/cmd/operator/internal/ports/dep"
 	"math/big"
+
+	portdep "github.com/dittonetwork/executor-avs/cmd/operator/internal/ports/dep"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

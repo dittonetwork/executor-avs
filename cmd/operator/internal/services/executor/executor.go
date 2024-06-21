@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	portdep "github.com/dittonetwork/executor-avs/cmd/operator/internal/ports/dep"
 	"math/big"
 	"sync"
 	"time"
+
+	portdep "github.com/dittonetwork/executor-avs/cmd/operator/internal/ports/dep"
 
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
