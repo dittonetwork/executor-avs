@@ -141,6 +141,25 @@ func (r *Executor) waitForTransaction(_ context.Context, tx *types.Transaction) 
 	}
 }
 
+func (r *Executor) filterCachedWorkflows(workflows []models.Workflow, blockNumber uint64) []models.Workflow {
+	const blocksToKeepInCache = 5
+	var filteredWorkflows []models.Workflow
+	for _, workflow := range workflows {
+		if cachedBlockNumber, ok := r.submittedWorkflowsCache[workflow.VaultAddress][workflow.WorkflowID]; ok {
+			if blockNumber-cachedBlockNumber < blocksToKeepInCache {
+				continue
+			}
+		}
+		filteredWorkflows = append(filteredWorkflows, workflow)
+	}
+	log.With(
+		log.Int("executable", len(workflows)),
+		log.Int("after_filter", len(filteredWorkflows)),
+	).Info("Filtered already cached worflows form execution candidates")
+
+	return filteredWorkflows
+}
+
 func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 	block, err := r.Client.BlockByHash(ctx, blockHash)
 	if err != nil {
@@ -185,31 +204,18 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 		return nil
 	}
 
-	const blocksToKeepInCache = 5
-	var filteredWorkflows []models.Workflow
-	for _, workflow := range executableWorkflows {
-		if blockNumber, ok := r.submittedWorkflowsCache[workflow.VaultAddress][workflow.WorkflowID]; ok {
-			if block.NumberU64()-blockNumber < blocksToKeepInCache {
-				continue
-			}
-		}
-		filteredWorkflows = append(filteredWorkflows, workflow)
-	}
-	log.With(
-		log.Int("executable", len(executableWorkflows)),
-		log.Int("after_filter", len(filteredWorkflows)),
-	).Info("Removed workflows already in cache")
+	filteredWorkflows := r.filterCachedWorkflows(executableWorkflows, block.NumberU64())
 
 	if len(filteredWorkflows) == 0 {
 		log.Info("No workflows to execute after filtering")
 		return nil
 	}
 
-	if err = r.executeWorkflows(ctx, &executableWorkflows); err != nil {
+	if err = r.executeWorkflows(ctx, filteredWorkflows); err != nil {
 		return fmt.Errorf("execute workflows: %w", err)
 	}
 
-	for _, workflow := range executableWorkflows {
+	for _, workflow := range filteredWorkflows {
 		if r.submittedWorkflowsCache[workflow.VaultAddress] == nil {
 			r.submittedWorkflowsCache[workflow.VaultAddress] = make(map[*big.Int]uint64)
 		}
@@ -304,8 +310,8 @@ func hexStringToBool(hexStr string) (bool, error) {
 	return value.Cmp(big.NewInt(0)) != 0, nil
 }
 
-func (r *Executor) executeWorkflows(ctx context.Context, workflows *[]models.Workflow) error {
-	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, *workflows)
+func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Workflow) error {
+	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, workflows)
 	if err != nil {
 		return fmt.Errorf("run multiple workflows: %w", err)
 	}
