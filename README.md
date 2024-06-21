@@ -86,7 +86,7 @@ Running executor:
 2. Set env variable with private key: `export OPERATOR_PRIVATE_KEY=<operator's hex private key without 0x prefix>`
 3. Register your operator in AVS: `./operator register --node-url <node_url> --contract-addr <contract_addr>`
 4. Set delegated signer: `./bin/operator set-signer --node-url <node_url> --contract-addr <contract_addr> --address <delegated signer address 0x...>`
-5. Replace env variable with delegated signer's private key: ``export OPERATOR_PRIVATE_KEY=<<delegated signer's hex private key without 0x prefix>>`
+5. Replace env variable with delegated signer's private key: `export OPERATOR_PRIVATE_KEY=<<delegated signer's hex private key without 0x prefix>>`
 6. Launch a binary as `./bin/operator run --node-url <node_url> --contract-addr <contract_addr>`
 7. Wait until rearrangement happens (epoch increment). Firstly, you’ll observe *not executor* messages, then it will become either *Not my turn to execute* or info about active workflows in case if it is your turn. You’re now in forever loop, being a part of executors network.
 8. To deregesiter operator from AVS, run `./operator deregister --node-url <node_url> --contract-addr <contract_addr>` with `OPERATOR_PRIVATE_KEY` env set to operator's private key from step 2.
