@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	portdep "github.com/dittonetwork/executor-avs/cmd/operator/internal/ports/dep"
+
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 	"github.com/dittonetwork/executor-avs/pkg/primitives"
@@ -274,6 +276,10 @@ func (r *Executor) getExecutableWorkflows(ctx context.Context, blockNum *big.Int
 func (r *Executor) simulate(ctx context.Context, workflow models.Workflow, blockNum *big.Int) (bool, error) {
 	tx, err := r.EntryPoint.GetRunWorkflowTx(ctx, workflow.VaultAddress, workflow.WorkflowID)
 	if err != nil {
+		if errors.Is(err, portdep.ErrExecutionReverted) {
+			return false, nil
+		}
+
 		return false, fmt.Errorf("run workflow: %w", err)
 	}
 

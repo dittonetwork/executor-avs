@@ -52,13 +52,13 @@ func (c *Client) SimulateTransaction(
 	ctx context.Context, tx *types.Transaction, blockNum *big.Int) (string, error) {
 	var result string
 
-	if err := c.client.Client().CallContext(ctx, &result, "eth_call", map[string]interface{}{
+	if err := c.client.Client().CallContext(ctx, &result, "eth_estimateGas", map[string]interface{}{
 		"from":  crypto.PubkeyToAddress(c.privateKey.PublicKey),
 		"to":    common.HexToAddress(c.contractAddr),
 		"data":  hexutil.Encode(tx.Data()),
 		"block": blockNum.Int64(),
 	}); err != nil {
-		return "", fmt.Errorf("call eth_call: %w", err)
+		return "", fmt.Errorf("call eth_estimateGas: %w", err)
 	}
 
 	log.With(log.Any("result", result)).Debug("simulate transaction done")
