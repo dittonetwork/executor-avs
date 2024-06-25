@@ -14,6 +14,7 @@ import (
 	"github.com/dittonetwork/executor-avs/pkg/log"
 	"github.com/dittonetwork/executor-avs/pkg/primitives"
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -31,6 +32,7 @@ type ethereumClient interface {
 	SendTransaction(ctx context.Context, tx *types.Transaction) error
 	GetBalance(ctx context.Context) (*big.Int, error)
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
+	CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error)
 }
 
 //go:generate mockery --name dittoEntryPoint --output ./mocks --outpkg mocks
@@ -39,18 +41,18 @@ type dittoEntryPoint interface {
 	IsExecutor(ctx context.Context) (bool, error)
 	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
 	GetRunWorkflowTx(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (*types.Transaction, error)
-	RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow) (*types.Transaction, error)
+	RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow, estimatedGasMultiplier float64) (*types.Transaction, error)
 	DeactivateExecutor(ctx context.Context) (*types.Transaction, error)
 	ActivateExecutor(ctx context.Context) (*types.Transaction, error)
+	GetSucceededWorkflows(logs []*types.Log) ([]models.Workflow, error)
 }
 
 type Executor struct {
 	Client     ethereumClient
 	EntryPoint dittoEntryPoint
 
-	metrics *Metrics
-	// TODO: make it more elegant. For each tx wait for the receipt
-	submittedWorkflowsCache map[common.Address]map[*big.Int]uint64
+	metrics        *Metrics
+	workflowsCache *WorkflowsCache
 }
 
 type Options func(*Executor)
@@ -62,13 +64,65 @@ func WithMetrics() Options {
 	}
 }
 
+type WorkflowsCache struct {
+	data map[common.Address]map[string]bool
+	mu   sync.Mutex
+}
+
+func NewWorkflowsCache() *WorkflowsCache {
+	return &WorkflowsCache{
+		data: make(map[common.Address]map[string]bool),
+	}
+}
+
+// Atomically checks and adds non-existing workflows to the cache.
+func (awc *WorkflowsCache) ConditionalAcquireWorkflowsLock(workflows []models.Workflow) []models.Workflow {
+	// we could lock mutex for each workflow insertion/deletion, but current implementation won't
+	//   degrade execution anyway, and it is easier to debug if concurrent calls had place.
+	awc.mu.Lock()
+	defer awc.mu.Unlock()
+
+	var inserted []models.Workflow
+	for _, workflow := range workflows {
+		address := workflow.VaultAddress
+		workflowID := workflow.WorkflowID.String()
+
+		if _, exists := awc.data[address]; !exists {
+			awc.data[address] = make(map[string]bool)
+		}
+
+		if _, exists := awc.data[address][workflowID]; !exists {
+			awc.data[address][workflowID] = true
+			inserted = append(inserted, workflow)
+		}
+	}
+	return inserted
+}
+
+func (awc *WorkflowsCache) ReleaseWorkflowsLock(workflows []models.Workflow) {
+	awc.mu.Lock()
+	defer awc.mu.Unlock()
+
+	for _, workflow := range workflows {
+		address := workflow.VaultAddress
+		workflowID := workflow.WorkflowID.String()
+
+		if workflows, exists := awc.data[address]; exists {
+			delete(workflows, workflowID)
+			if len(workflows) == 0 {
+				delete(awc.data, address)
+			}
+		}
+	}
+}
+
 func NewExecutor(client ethereumClient, entryPoint dittoEntryPoint, opts ...Options) *Executor {
 	e := &Executor{
-		Client:     client,
-		EntryPoint: entryPoint,
-		metrics:    NewMetrics(),
+		Client:         client,
+		EntryPoint:     entryPoint,
+		metrics:        NewMetrics(),
+		workflowsCache: NewWorkflowsCache(),
 	}
-	e.clearSubmittedWorkflowsCache()
 
 	for _, opt := range opts {
 		opt(e)
@@ -143,25 +197,6 @@ func (r *Executor) waitForTransaction(_ context.Context, tx *types.Transaction) 
 	}
 }
 
-func (r *Executor) filterCachedWorkflows(workflows []models.Workflow, blockNumber uint64) []models.Workflow {
-	const blocksToKeepInCache = 5
-	var filteredWorkflows []models.Workflow
-	for _, workflow := range workflows {
-		if cachedBlockNumber, ok := r.submittedWorkflowsCache[workflow.VaultAddress][workflow.WorkflowID]; ok {
-			if blockNumber-cachedBlockNumber < blocksToKeepInCache {
-				continue
-			}
-		}
-		filteredWorkflows = append(filteredWorkflows, workflow)
-	}
-	log.With(
-		log.Int("executable", len(workflows)),
-		log.Int("after_filter", len(filteredWorkflows)),
-	).Info("Filtered already cached worflows form execution candidates")
-
-	return filteredWorkflows
-}
-
 func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 	block, err := r.Client.BlockByHash(ctx, blockHash)
 	if err != nil {
@@ -193,7 +228,6 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 
 	if !isValidExecutor {
 		log.Info("Not my turn to execute")
-		r.clearSubmittedWorkflowsCache()
 		return nil
 	}
 
@@ -206,26 +240,29 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 		return nil
 	}
 
-	filteredWorkflows := r.filterCachedWorkflows(executableWorkflows, block.NumberU64())
+	acquiredWorkflows := r.workflowsCache.ConditionalAcquireWorkflowsLock(executableWorkflows)
+	defer r.workflowsCache.ReleaseWorkflowsLock(acquiredWorkflows)
 
-	if len(filteredWorkflows) == 0 {
+	log.With(
+		log.Int("execution_candidates", len(executableWorkflows)),
+		log.Int("after_filtering", len(acquiredWorkflows)),
+	).Info("Filtered already cached worflows from execution candidates")
+
+	if len(acquiredWorkflows) == 0 {
 		log.Info("No workflows to execute after filtering")
 		return nil
 	}
 
-	if err = r.executeWorkflows(ctx, filteredWorkflows); err != nil {
+	succeededWorkflows, err := r.executeWorkflows(ctx, acquiredWorkflows)
+	if err != nil {
 		return fmt.Errorf("execute workflows: %w", err)
 	}
+	log.With(
+		log.Int("succeeded_workflows", len(succeededWorkflows)),
+		log.Int("were_sent_workflows", len(acquiredWorkflows)),
+	).Debug("Workflows executed")
 
-	for _, workflow := range filteredWorkflows {
-		if r.submittedWorkflowsCache[workflow.VaultAddress] == nil {
-			r.submittedWorkflowsCache[workflow.VaultAddress] = make(map[*big.Int]uint64)
-		}
-		r.submittedWorkflowsCache[workflow.VaultAddress][workflow.WorkflowID] = block.NumberU64()
-	}
-
-	// TODO: rename, it is not executed workflows, just submitted ones
-	r.metrics.CountExecutedWorkflowsAmountTotal(len(filteredWorkflows))
+	r.metrics.CountExecutedWorkflowsAmountTotal(len(succeededWorkflows))
 
 	return nil
 }
@@ -256,6 +293,11 @@ func (r *Executor) getExecutableWorkflows(ctx context.Context, blockNum *big.Int
 				errCh <- fmt.Errorf("simulate workflow %d: %w", workflow.WorkflowID.Int64(), err)
 				return
 			}
+			log.With(
+				log.String("vault_addr", workflow.VaultAddress.Hex()),
+				log.String("workflow_id", workflow.WorkflowID.String()),
+				log.Bool("result", canRun),
+			).Debug("Simulation done")
 			workflow.CouldBeExecuted = canRun
 		}(workflow)
 	}
@@ -300,8 +342,6 @@ func (r *Executor) simulate(ctx context.Context, workflow models.Workflow, block
 		return false, fmt.Errorf("interpreting result: %w", err)
 	}
 
-	log.With(log.Bool("result", isSuccess)).Debug("Simulation done")
-
 	return isSuccess, nil
 }
 
@@ -316,14 +356,10 @@ func hexStringToBool(hexStr string) (bool, error) {
 	return value.Cmp(big.NewInt(0)) != 0, nil
 }
 
-func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Workflow) error {
-	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, workflows)
+func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Workflow) ([]models.Workflow, error) {
+	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, workflows, 1.2)
 	if err != nil {
-		return fmt.Errorf("run multiple workflows: %w", err)
-	}
-
-	if err = r.Client.SendTransaction(ctx, tx); err != nil {
-		return fmt.Errorf("send transaction: %w", err)
+		return nil, fmt.Errorf("run multiple workflows: %w", err)
 	}
 
 	log.With(
@@ -337,9 +373,20 @@ func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Work
 
 	r.metrics.CountNativeTokenSpentAmountTotal(primitives.WeiToETH(spentAmount))
 
-	return nil
-}
+	receipt, err := bind.WaitMined(ctx, r.Client, tx)
+	if err != nil {
+		return nil, fmt.Errorf("waiting for RunMultipleWorkflows tx: %w", err)
+	}
+	log.With(log.String("tx_hash", tx.Hash().String())).Debug("waiting for transaction to appear on chain")
+	if receipt.Status == types.ReceiptStatusFailed {
+		return nil, fmt.Errorf("RunMultipleWorkflows failed on chain, status: %d", receipt.Status)
+	}
+	log.With(log.String("tx_hash", tx.Hash().String())).Debug("transaction is on chain")
 
-func (r *Executor) clearSubmittedWorkflowsCache() {
-	r.submittedWorkflowsCache = make(map[common.Address]map[*big.Int]uint64)
+	succeededWorkflows, err := r.EntryPoint.GetSucceededWorkflows(receipt.Logs)
+	if err != nil {
+		return nil, fmt.Errorf("GetSucceededWorkflows: %w", err)
+	}
+
+	return succeededWorkflows, nil
 }

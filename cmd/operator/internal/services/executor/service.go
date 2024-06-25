@@ -58,6 +58,7 @@ func (s *Service) GetStatus() api.ServiceStatusType {
 func (s *Service) Start() {
 	go s.start()
 }
+
 func (s *Service) start() {
 	ctx := context.Background()
 
@@ -81,9 +82,11 @@ func (s *Service) start() {
 		case err = <-sub.Err():
 			log.With(log.Err(err)).Error("subscription error")
 		case block := <-blocks:
-			if err = s.executor.Handle(ctx, block.Hash()); err != nil {
-				log.With(log.Err(err)).Error("handle block")
-			}
+			go func(b *types.Header) {
+				if innerErr := s.HandleBlock(ctx, b.Hash()); innerErr != nil {
+					log.With(log.Err(innerErr)).Error("handle block")
+				}
+			}(block)
 		}
 	}
 }

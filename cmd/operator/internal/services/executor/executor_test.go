@@ -2,7 +2,10 @@ package executor_test
 
 import (
 	"context"
+	"fmt"
 	"math/big"
+	"math/rand"
+	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -62,14 +65,14 @@ func TestExecutor_Handle(t *testing.T) {
 						Return(wfSimulatedTx1, nil)
 					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[1].VaultAddress, big.NewInt(2)).
 						Return(wfSimulatedTx2, nil)
+					m.EXPECT().GetSucceededWorkflows(mock.Anything).Return([]models.Workflow{activeWorkflows[0]}, nil)
 					return m
 				},
 				client: func(t *testing.T) *mocks.EthereumClient {
 					m := mocks.NewEthereumClient(t)
 					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
-					m.EXPECT().SimulateTransaction(ctx, wfSimulatedTx1, blockNum).Return(result, nil)
-					m.EXPECT().SimulateTransaction(ctx, wfSimulatedTx2, blockNum).Return(result, nil)
-					m.EXPECT().SendTransaction(ctx, tx).Return(nil)
+					m.EXPECT().SimulateTransaction(ctx, mock.Anything, mock.Anything).Return(result, nil)
+					m.EXPECT().TransactionReceipt(mock.Anything, mock.Anything).Return(types.NewReceipt([]byte{}, false, 1337), nil)
 					return m
 				},
 			},
@@ -122,6 +125,7 @@ func TestExecutor_Handle(t *testing.T) {
 						Return(wfSimulatedTx1, nil)
 					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[1].VaultAddress, big.NewInt(2)).
 						Return(wfSimulatedTx2, nil)
+					m.EXPECT().GetSucceededWorkflows(mock.Anything).Return([]models.Workflow{activeWorkflows[0]}, nil)
 					return m
 				},
 				client: func(t *testing.T) *mocks.EthereumClient {
@@ -129,7 +133,7 @@ func TestExecutor_Handle(t *testing.T) {
 					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
 					m.EXPECT().SimulateTransaction(ctx, wfSimulatedTx1, blockNum).Return(result, nil)
 					m.EXPECT().SimulateTransaction(ctx, wfSimulatedTx2, blockNum).Return("0x0", nil)
-					m.EXPECT().SendTransaction(ctx, tx).Return(nil)
+					m.EXPECT().TransactionReceipt(mock.Anything, mock.Anything).Return(types.NewReceipt([]byte{}, false, 1337), nil)
 					return m
 				},
 			},
@@ -147,98 +151,104 @@ func TestExecutor_Handle(t *testing.T) {
 	}
 }
 
-func workflowsAreTheSame(a, b []models.Workflow) bool {
-	if len(a) != len(b) {
-		return false
+// TestConditionalAcquireWorkflowsLock tests adding new workflows to the cache.
+func TestCacheConditionalAcquireWorkflowsLock(t *testing.T) {
+	cache := executor.NewWorkflowsCache()
+	workflows := []models.Workflow{
+		{VaultAddress: common.HexToAddress("0x1"), WorkflowID: big.NewInt(1)},
+		{VaultAddress: common.HexToAddress("0x1"), WorkflowID: big.NewInt(2)},
+		{VaultAddress: common.HexToAddress("0x2"), WorkflowID: big.NewInt(1)},
 	}
-	for idx, elA := range a {
-		elB := b[idx]
 
-		if elA.VaultAddress != elB.VaultAddress || elA.WorkflowID != elB.WorkflowID {
-			return false
-		}
-	}
-	return true
+	inserted := cache.ConditionalAcquireWorkflowsLock(workflows)
+	assert.Len(t, inserted, 3)
+
+	insertedAgain := cache.ConditionalAcquireWorkflowsLock(workflows)
+	assert.Empty(t, insertedAgain)
 }
 
-func TestExecutor_Cache(t *testing.T) {
-	type ethereumClientMockBuilder func(*testing.T) *mocks.EthereumClient
-	type dittoEntryPointMockBuilder func(*testing.T) *mocks.DittoEntryPoint
+// TestReleaseWorkflowsLock tests the removal of workflows from the cache.
+func TestCacheReleaseWorkflowsLock(t *testing.T) {
+	cache := executor.NewWorkflowsCache()
+	var wf1 = models.Workflow{VaultAddress: common.HexToAddress("0x1"), WorkflowID: big.NewInt(1)}
+	var wf2 = models.Workflow{VaultAddress: common.HexToAddress("0x1"), WorkflowID: big.NewInt(2)}
 
-	// Test values
-	tx := types.NewTx(&types.DynamicFeeTx{})
-	wf11 := models.Workflow{WorkflowID: big.NewInt(1), VaultAddress: common.HexToAddress("0x111")}
-	wf12 := models.Workflow{WorkflowID: big.NewInt(2), VaultAddress: common.HexToAddress("0x111")}
-	wf2 := models.Workflow{WorkflowID: big.NewInt(1), VaultAddress: common.HexToAddress("0x222")}
-	wf3 := models.Workflow{WorkflowID: big.NewInt(1), VaultAddress: common.HexToAddress("0x333")}
-	type fields struct {
-		client     ethereumClientMockBuilder
-		entryPoint dittoEntryPointMockBuilder
+	acquired := cache.ConditionalAcquireWorkflowsLock([]models.Workflow{wf1, wf2})
+	assert.Len(t, acquired, 2)
+
+	cache.ReleaseWorkflowsLock([]models.Workflow{wf1})
+
+	acquired = cache.ConditionalAcquireWorkflowsLock([]models.Workflow{wf1, wf2})
+	assert.Len(t, acquired, 1)
+
+	assert.Equal(t, []models.Workflow{wf1}, acquired)
+}
+
+func getRandomSubset[T any](items []T, subsetSize int) []T {
+	if len(items) == 0 || subsetSize <= 0 {
+		return nil
 	}
-	tests := []struct {
-		name        string
-		fields      fields
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name: "Success flow",
-			fields: fields{
-				entryPoint: func(t *testing.T) *mocks.DittoEntryPoint {
-					m := mocks.NewDittoEntryPoint(t)
-					m.EXPECT().IsExecutor(mock.Anything).Return(true, nil)
-					m.EXPECT().IsValidExecutor(mock.Anything, mock.Anything).Return(true, nil)
-					m.EXPECT().GetAllActiveWorkflows(mock.Anything).Return([]models.Workflow{wf11, wf12, wf2}, nil).Twice()
-					m.EXPECT().GetAllActiveWorkflows(mock.Anything).Return([]models.Workflow{wf11, wf12, wf2, wf3}, nil)
-					// Unfortunatelly, order does not matter. Declaring the same
-					//   MatchedBy with Once() 2 times == declaring with Twice() 1 time
-					m.EXPECT().RunMultipleWorkflows(mock.Anything, mock.MatchedBy(func(wfs []models.Workflow) bool {
-						return workflowsAreTheSame(wfs, []models.Workflow{wf11, wf12, wf2})
-					})).Return(tx, nil).Once()
-					m.EXPECT().RunMultipleWorkflows(mock.Anything, mock.MatchedBy(
-						func(wfs []models.Workflow) bool { return workflowsAreTheSame(wfs, []models.Workflow{wf3}) }),
-					).Return(tx, nil).Once()
-					m.EXPECT().RunMultipleWorkflows(mock.Anything, mock.MatchedBy(
-						func(wfs []models.Workflow) bool { return workflowsAreTheSame(wfs, []models.Workflow{wf11, wf12, wf2}) }),
-					).Return(tx, nil).Once()
-					m.EXPECT().RunMultipleWorkflows(mock.Anything, mock.MatchedBy(
-						func(wfs []models.Workflow) bool {
-							return workflowsAreTheSame(wfs, []models.Workflow{wf11, wf12, wf2, wf3})
-						}),
-					).Return(tx, nil).Once()
-					m.EXPECT().GetRunWorkflowTx(
-						mock.Anything,
-						mock.Anything,
-						mock.Anything,
-					).Return(types.NewTransaction(
-						uint64(1), common.HexToAddress("0x123"), big.NewInt(0), 0, big.NewInt(0), []byte("data"),
-					), nil)
-					return m
-				},
-				client: func(t *testing.T) *mocks.EthereumClient {
-					m := mocks.NewEthereumClient(t)
-					for _, blockNum := range []int64{0, 1, 4, 5, 10} {
-						m.EXPECT().BlockByHash(mock.Anything, mock.Anything).Return(
-							types.NewBlock(&types.Header{Number: big.NewInt(blockNum)}, nil, nil, nil), nil).Once()
-					}
-					m.EXPECT().SimulateTransaction(mock.Anything, mock.Anything, mock.Anything).Return("0x1", nil)
-					m.EXPECT().SendTransaction(mock.Anything, mock.Anything).Return(nil)
-					return m
-				},
-			},
-			wantErr: false,
-		},
+	if subsetSize > len(items) {
+		subsetSize = len(items)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := executor.NewExecutor(tt.fields.client(t), tt.fields.entryPoint(t))
-			for i := 0; i < 5; i++ {
-				err := r.Handle(context.Background(), common.HexToHash("0x1"))
-				if err != nil {
-					t.Error(err)
-				}
+	subset := make([]T, subsetSize)
+	pickedIndices := make(map[int]bool)
+
+	for i := range subsetSize {
+		for {
+			idx := rand.Intn(len(items))
+			if !pickedIndices[idx] {
+				subset[i] = items[idx]
+				pickedIndices[idx] = true
+				break
 			}
-		})
+		}
+	}
+	return subset
+}
+
+func TestConcurrentAcquisitionWithSets(t *testing.T) {
+	cache := executor.NewWorkflowsCache()
+	var wg sync.WaitGroup
+
+	totalWorkflows := 200
+	workflows := make([]models.Workflow, totalWorkflows)
+	for i := range totalWorkflows {
+		workflows[i] = models.Workflow{
+			VaultAddress: common.HexToAddress("0x" + fmt.Sprintf("%02x", i)),
+			WorkflowID:   big.NewInt(int64(i)),
+		}
+	}
+
+	acquired := make(map[common.Address]map[string]int)
+	mu := sync.Mutex{}
+
+	workerCount := 20
+	wg.Add(workerCount)
+	for range workerCount {
+		go func() {
+			defer wg.Done()
+			for j := range 10 {
+				subset := getRandomSubset(workflows, j)
+				acquiredWorkflows := cache.ConditionalAcquireWorkflowsLock(subset)
+				mu.Lock()
+				for _, aWf := range acquiredWorkflows {
+					if _, exists := acquired[aWf.VaultAddress]; !exists {
+						acquired[aWf.VaultAddress] = make(map[string]int)
+					}
+					acquired[aWf.VaultAddress][aWf.WorkflowID.String()]++
+				}
+				mu.Unlock()
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	for vaultAddr, wfs := range acquired {
+		for wfID, timesAquired := range wfs {
+			assert.Equal(t, 1, timesAquired, "Workflow %d of vault %s was acquired more than once", wfID, vaultAddr)
+		}
 	}
 }

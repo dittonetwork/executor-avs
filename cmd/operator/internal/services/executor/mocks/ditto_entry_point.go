@@ -262,6 +262,64 @@ func (_c *DittoEntryPoint_GetRunWorkflowTx_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
+// GetSucceededWorkflows provides a mock function with given fields: logs
+func (_m *DittoEntryPoint) GetSucceededWorkflows(logs []*types.Log) ([]models.Workflow, error) {
+	ret := _m.Called(logs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSucceededWorkflows")
+	}
+
+	var r0 []models.Workflow
+	var r1 error
+	if rf, ok := ret.Get(0).(func([]*types.Log) ([]models.Workflow, error)); ok {
+		return rf(logs)
+	}
+	if rf, ok := ret.Get(0).(func([]*types.Log) []models.Workflow); ok {
+		r0 = rf(logs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Workflow)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func([]*types.Log) error); ok {
+		r1 = rf(logs)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DittoEntryPoint_GetSucceededWorkflows_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSucceededWorkflows'
+type DittoEntryPoint_GetSucceededWorkflows_Call struct {
+	*mock.Call
+}
+
+// GetSucceededWorkflows is a helper method to define mock.On call
+//   - logs []*types.Log
+func (_e *DittoEntryPoint_Expecter) GetSucceededWorkflows(logs interface{}) *DittoEntryPoint_GetSucceededWorkflows_Call {
+	return &DittoEntryPoint_GetSucceededWorkflows_Call{Call: _e.mock.On("GetSucceededWorkflows", logs)}
+}
+
+func (_c *DittoEntryPoint_GetSucceededWorkflows_Call) Run(run func(logs []*types.Log)) *DittoEntryPoint_GetSucceededWorkflows_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]*types.Log))
+	})
+	return _c
+}
+
+func (_c *DittoEntryPoint_GetSucceededWorkflows_Call) Return(_a0 []models.Workflow, _a1 error) *DittoEntryPoint_GetSucceededWorkflows_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DittoEntryPoint_GetSucceededWorkflows_Call) RunAndReturn(run func([]*types.Log) ([]models.Workflow, error)) *DittoEntryPoint_GetSucceededWorkflows_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // IsExecutor provides a mock function with given fields: ctx
 func (_m *DittoEntryPoint) IsExecutor(ctx context.Context) (bool, error) {
 	ret := _m.Called(ctx)

@@ -87,6 +87,66 @@ func (_c *EthereumClient_BlockByHash_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// CodeAt provides a mock function with given fields: ctx, account, blockNumber
+func (_m *EthereumClient) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
+	ret := _m.Called(ctx, account, blockNumber)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CodeAt")
+	}
+
+	var r0 []byte
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, common.Address, *big.Int) ([]byte, error)); ok {
+		return rf(ctx, account, blockNumber)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, common.Address, *big.Int) []byte); ok {
+		r0 = rf(ctx, account, blockNumber)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, common.Address, *big.Int) error); ok {
+		r1 = rf(ctx, account, blockNumber)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// EthereumClient_CodeAt_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CodeAt'
+type EthereumClient_CodeAt_Call struct {
+	*mock.Call
+}
+
+// CodeAt is a helper method to define mock.On call
+//   - ctx context.Context
+//   - account common.Address
+//   - blockNumber *big.Int
+func (_e *EthereumClient_Expecter) CodeAt(ctx interface{}, account interface{}, blockNumber interface{}) *EthereumClient_CodeAt_Call {
+	return &EthereumClient_CodeAt_Call{Call: _e.mock.On("CodeAt", ctx, account, blockNumber)}
+}
+
+func (_c *EthereumClient_CodeAt_Call) Run(run func(ctx context.Context, account common.Address, blockNumber *big.Int)) *EthereumClient_CodeAt_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.Address), args[2].(*big.Int))
+	})
+	return _c
+}
+
+func (_c *EthereumClient_CodeAt_Call) Return(_a0 []byte, _a1 error) *EthereumClient_CodeAt_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *EthereumClient_CodeAt_Call) RunAndReturn(run func(context.Context, common.Address, *big.Int) ([]byte, error)) *EthereumClient_CodeAt_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetBalance provides a mock function with given fields: ctx
 func (_m *EthereumClient) GetBalance(ctx context.Context) (*big.Int, error) {
 	ret := _m.Called(ctx)
