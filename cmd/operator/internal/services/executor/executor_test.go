@@ -60,7 +60,7 @@ func TestExecutor_Handle(t *testing.T) {
 					m.EXPECT().IsExecutor(ctx).Return(true, nil)
 					m.EXPECT().IsValidExecutor(ctx, blockNum).Return(true, nil)
 					m.EXPECT().GetAllActiveWorkflows(ctx).Return(activeWorkflows, nil)
-					m.EXPECT().RunMultipleWorkflows(ctx, activeWorkflows).Return(tx, nil)
+					m.EXPECT().RunMultipleWorkflows(ctx, activeWorkflows, mock.Anything).Return(tx, nil)
 					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[0].VaultAddress, big.NewInt(1)).
 						Return(wfSimulatedTx1, nil)
 					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[1].VaultAddress, big.NewInt(2)).
@@ -120,7 +120,7 @@ func TestExecutor_Handle(t *testing.T) {
 					m.EXPECT().IsExecutor(ctx).Return(true, nil)
 					m.EXPECT().IsValidExecutor(ctx, blockNum).Return(true, nil)
 					m.EXPECT().GetAllActiveWorkflows(ctx).Return(activeWorkflows, nil)
-					m.EXPECT().RunMultipleWorkflows(ctx, activeWorkflows[:1]).Return(tx, nil)
+					m.EXPECT().RunMultipleWorkflows(ctx, activeWorkflows[:1], mock.Anything).Return(tx, nil)
 					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[0].VaultAddress, big.NewInt(1)).
 						Return(wfSimulatedTx1, nil)
 					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[1].VaultAddress, big.NewInt(2)).

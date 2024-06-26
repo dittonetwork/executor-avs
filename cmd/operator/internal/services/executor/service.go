@@ -2,8 +2,7 @@ package executor
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"sync"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -77,32 +76,28 @@ func (s *Service) start() {
 		log.With(log.Err(err)).Fatal("subscribe to new blocks")
 	}
 
+	var wg sync.WaitGroup
 	for {
 		select {
 		case err = <-sub.Err():
 			log.With(log.Err(err)).Error("subscription error")
 		case block := <-blocks:
+			wg.Add(1)
 			go func(b *types.Header) {
-				if innerErr := s.HandleBlock(ctx, b.Hash()); innerErr != nil {
-					log.With(log.Err(innerErr)).Error("handle block")
+				defer wg.Done()
+				if err = s.executor.Handle(ctx, b.Hash()); err != nil {
+					log.With(log.Err(err)).Error("handle block")
 				}
 			}(block)
 		}
-	}
-}
 
-func (s *Service) HandleBlock(ctx context.Context, blockHash common.Hash) error {
-	if err := s.executor.Handle(ctx, blockHash); err != nil {
-		if errors.Is(err, ErrUnregisteredExecutor) {
-			if s.isShuttingDown {
-				s.done <- struct{}{}
-			}
-		} else {
-			return fmt.Errorf("executor handle: %w", err)
+		if s.isShuttingDown {
+			break
 		}
 	}
 
-	return nil
+	wg.Wait()
+	s.done <- struct{}{}
 }
 
 func (s *Service) Stop() {

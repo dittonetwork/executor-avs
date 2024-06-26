@@ -41,7 +41,8 @@ type dittoEntryPoint interface {
 	IsExecutor(ctx context.Context) (bool, error)
 	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
 	GetRunWorkflowTx(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (*types.Transaction, error)
-	RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow, estimatedGasMultiplier float64) (*types.Transaction, error)
+	RunMultipleWorkflows(ctx context.Context,
+		workflows []models.Workflow, estimatedGasMultiplier float64) (*types.Transaction, error)
 	DeactivateExecutor(ctx context.Context) (*types.Transaction, error)
 	ActivateExecutor(ctx context.Context) (*types.Transaction, error)
 	GetSucceededWorkflows(logs []*types.Log) ([]models.Workflow, error)
@@ -189,6 +190,7 @@ func (r *Executor) waitForTransaction(_ context.Context, tx *types.Transaction) 
 				log.String("tx_hash", receipt.TxHash.Hex()),
 				log.String("block_hash", receipt.BlockHash.Hex()),
 			).Info("Transaction included into block ")
+			return
 		}
 		if err != nil {
 			log.Info("Transaction receipt not available yet, waiting...")
@@ -357,7 +359,8 @@ func hexStringToBool(hexStr string) (bool, error) {
 }
 
 func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Workflow) ([]models.Workflow, error) {
-	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, workflows, 1.2)
+	gasLimitMultiplier := 1.5
+	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, workflows, gasLimitMultiplier)
 	if err != nil {
 		return nil, fmt.Errorf("run multiple workflows: %w", err)
 	}

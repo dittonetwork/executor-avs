@@ -175,7 +175,8 @@ func (d *DittoEntryPoint) GetRunWorkflowTx(ctx context.Context, vaultAddr common
 	return tx, nil
 }
 
-func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow, estimatedGasMultiplier float64) (
+func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context,
+	workflows []models.Workflow, estimatedGasMultiplier float64) (
 	*types.Transaction, error,
 ) {
 	wfs := make([]dittoentrypoint.IDittoEntryPointWorkflow, 0, len(workflows))

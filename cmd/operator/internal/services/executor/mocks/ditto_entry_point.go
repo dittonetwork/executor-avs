@@ -433,9 +433,9 @@ func (_c *DittoEntryPoint_IsValidExecutor_Call) RunAndReturn(run func(context.Co
 	return _c
 }
 
-// RunMultipleWorkflows provides a mock function with given fields: ctx, workflows
-func (_m *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow) (*types.Transaction, error) {
-	ret := _m.Called(ctx, workflows)
+// RunMultipleWorkflows provides a mock function with given fields: ctx, workflows, estimatedGasMultiplier
+func (_m *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow, estimatedGasMultiplier float64) (*types.Transaction, error) {
+	ret := _m.Called(ctx, workflows, estimatedGasMultiplier)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RunMultipleWorkflows")
@@ -443,19 +443,19 @@ func (_m *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context, workflows [
 
 	var r0 *types.Transaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []models.Workflow) (*types.Transaction, error)); ok {
-		return rf(ctx, workflows)
+	if rf, ok := ret.Get(0).(func(context.Context, []models.Workflow, float64) (*types.Transaction, error)); ok {
+		return rf(ctx, workflows, estimatedGasMultiplier)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []models.Workflow) *types.Transaction); ok {
-		r0 = rf(ctx, workflows)
+	if rf, ok := ret.Get(0).(func(context.Context, []models.Workflow, float64) *types.Transaction); ok {
+		r0 = rf(ctx, workflows, estimatedGasMultiplier)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.Transaction)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []models.Workflow) error); ok {
-		r1 = rf(ctx, workflows)
+	if rf, ok := ret.Get(1).(func(context.Context, []models.Workflow, float64) error); ok {
+		r1 = rf(ctx, workflows, estimatedGasMultiplier)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -471,13 +471,14 @@ type DittoEntryPoint_RunMultipleWorkflows_Call struct {
 // RunMultipleWorkflows is a helper method to define mock.On call
 //   - ctx context.Context
 //   - workflows []models.Workflow
-func (_e *DittoEntryPoint_Expecter) RunMultipleWorkflows(ctx interface{}, workflows interface{}) *DittoEntryPoint_RunMultipleWorkflows_Call {
-	return &DittoEntryPoint_RunMultipleWorkflows_Call{Call: _e.mock.On("RunMultipleWorkflows", ctx, workflows)}
+//   - estimatedGasMultiplier float64
+func (_e *DittoEntryPoint_Expecter) RunMultipleWorkflows(ctx interface{}, workflows interface{}, estimatedGasMultiplier interface{}) *DittoEntryPoint_RunMultipleWorkflows_Call {
+	return &DittoEntryPoint_RunMultipleWorkflows_Call{Call: _e.mock.On("RunMultipleWorkflows", ctx, workflows, estimatedGasMultiplier)}
 }
 
-func (_c *DittoEntryPoint_RunMultipleWorkflows_Call) Run(run func(ctx context.Context, workflows []models.Workflow)) *DittoEntryPoint_RunMultipleWorkflows_Call {
+func (_c *DittoEntryPoint_RunMultipleWorkflows_Call) Run(run func(ctx context.Context, workflows []models.Workflow, estimatedGasMultiplier float64)) *DittoEntryPoint_RunMultipleWorkflows_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]models.Workflow))
+		run(args[0].(context.Context), args[1].([]models.Workflow), args[2].(float64))
 	})
 	return _c
 }
@@ -487,7 +488,7 @@ func (_c *DittoEntryPoint_RunMultipleWorkflows_Call) Return(_a0 *types.Transacti
 	return _c
 }
 
-func (_c *DittoEntryPoint_RunMultipleWorkflows_Call) RunAndReturn(run func(context.Context, []models.Workflow) (*types.Transaction, error)) *DittoEntryPoint_RunMultipleWorkflows_Call {
+func (_c *DittoEntryPoint_RunMultipleWorkflows_Call) RunAndReturn(run func(context.Context, []models.Workflow, float64) (*types.Transaction, error)) *DittoEntryPoint_RunMultipleWorkflows_Call {
 	_c.Call.Return(run)
 	return _c
 }
