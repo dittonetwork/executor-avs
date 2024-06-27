@@ -1,5 +1,6 @@
 # Ditto AVS Operator
 
+
 ## Introduction
 
 At Ditto, we are developing a system that allows users to execute on-chain transactions based on various triggers in a reliable way. This means users can set up automations without worrying about whether the transactions will be executed or missed. Our solution includes off-chain operators, which any user can run to ensure an affordable and dependable protocol flow. On-chain smart contracts are used to manage the protocol and distribute punishments and rewards.

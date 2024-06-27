@@ -25,6 +25,7 @@ const (
 var (
 	env, addr, diagnosticsAddr string
 	shutdownTimeout            time.Duration
+	autoDeactivate             bool
 )
 
 func initRunFlags(cmd *cobra.Command) {
@@ -33,6 +34,7 @@ func initRunFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&addr, "addr", ":8080", "Operator addr")
 	cmd.Flags().StringVar(&diagnosticsAddr, "diagnostics-addr", ":7070", "Operator diagnostics addr")
 	cmd.Flags().DurationVar(&shutdownTimeout, "shutdown-timeout", defaultShutdownTimeout, "Graceful shutdown timeout")
+	cmd.Flags().BoolVar(&autoDeactivate, "auto-deactivate", true, "Do not deactivate the operator on shutdown")
 }
 
 func Run(cfg *CommonFlags) *sync.WaitGroup {
@@ -55,7 +57,10 @@ func Run(cfg *CommonFlags) *sync.WaitGroup {
 	}
 	// services
 	// TODO: refactor WithMetrics passing
-	executorService := executor.NewService(executor.NewExecutor(ethClient, entryPoint, executor.WithMetrics()))
+
+	executorService := executor.NewService(
+		executor.NewExecutor(ethClient, entryPoint, executor.WithMetrics(), executor.WithCustomLiveCycle(autoDeactivate)),
+	)
 
 	return service.RunWait(
 		executorService,

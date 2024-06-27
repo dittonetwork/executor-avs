@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/dittonetwork/executor-avs/pkg/log"
 	geth "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -61,8 +60,6 @@ func (c *Client) SimulateTransaction(
 		return "", fmt.Errorf("call eth_estimateGas: %w", err)
 	}
 
-	log.With(log.Any("result", result)).Debug("simulate transaction done")
-
 	return result, nil
 }
 
@@ -85,4 +82,8 @@ func (c *Client) GetBalance(ctx context.Context) (*big.Int, error) {
 
 func (c *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
 	return c.client.TransactionReceipt(ctx, txHash)
+}
+
+func (c *Client) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
+	return c.client.CodeAt(ctx, account, blockNumber)
 }

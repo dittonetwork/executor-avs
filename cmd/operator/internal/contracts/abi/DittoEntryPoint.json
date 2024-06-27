@@ -8,6 +8,19 @@
   },
   {
     "type": "function",
+    "name": "addStrategy",
+    "inputs": [
+      {
+        "name": "_strategy",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "arrangeExecutors",
     "inputs": [],
     "outputs": [],
@@ -395,12 +408,12 @@
   },
   {
     "type": "function",
-    "name": "setProtocolFees",
+    "name": "setStrategies",
     "inputs": [
       {
-        "name": "_protocolFees",
-        "type": "address",
-        "internalType": "address"
+        "name": "_strategies",
+        "type": "address[]",
+        "internalType": "address[]"
       }
     ],
     "outputs": [],
@@ -421,9 +434,9 @@
         "internalType": "uint256"
       },
       {
-        "name": "strategy",
-        "type": "address",
-        "internalType": "address"
+        "name": "strategies",
+        "type": "address[]",
+        "internalType": "address[]"
       },
       {
         "name": "delegateManager",
@@ -487,6 +500,25 @@
   {
     "type": "event",
     "name": "DittoEntryPointRegisterWorkflow",
+    "inputs": [
+      {
+        "name": "vault",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "workflowId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "DittoEntryPointWorkflowSuccess",
     "inputs": [
       {
         "name": "vault",
