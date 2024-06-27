@@ -52,6 +52,7 @@ func TestService_GracefulShutdown(t *testing.T) {
 	executorHandler := mocks.NewExecutor(t)
 	executorHandler.EXPECT().Activate(mock.Anything).Return(nil)
 	executorHandler.EXPECT().Handle(ctx, header.Hash()).Return(ErrUnregisteredExecutor)
+	executorHandler.EXPECT().IsAutoDeactivate().Return(true)
 	executorHandler.EXPECT().Deactivate(ctx).Return(nil)
 	executorHandler.EXPECT().SubscribeToNewBlocks(mock.Anything).Return(headersChan, NewMockSubscription(), nil)
 

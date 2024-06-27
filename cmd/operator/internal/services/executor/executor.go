@@ -54,6 +54,7 @@ type Executor struct {
 
 	metrics        *Metrics
 	workflowsCache *WorkflowsCache
+	autoDeactivate bool
 }
 
 type Options func(*Executor)
@@ -61,6 +62,12 @@ type Options func(*Executor)
 func WithMetrics() Options {
 	return func(e *Executor) {
 		e.metrics.Register()
+	}
+}
+
+func WithCustomLiveCycle(autoDeactivate bool) Options {
+	return func(e *Executor) {
+		e.autoDeactivate = autoDeactivate
 	}
 }
 
@@ -129,6 +136,10 @@ func NewExecutor(client ethereumClient, entryPoint dittoEntryPoint, opts ...Opti
 	}
 
 	return e
+}
+
+func (r *Executor) IsAutoDeactivate() bool {
+	return r.autoDeactivate
 }
 
 func (r *Executor) SubscribeToNewBlocks(ctx context.Context) (chan *types.Header, ethereum.Subscription, error) {

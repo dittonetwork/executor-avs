@@ -19,6 +19,7 @@ type executor interface {
 	Handle(ctx context.Context, blockHash common.Hash) error
 	Deactivate(ctx context.Context) error
 	Activate(ctx context.Context) error
+	IsAutoDeactivate() bool
 }
 
 type Service struct {
@@ -103,9 +104,11 @@ func (s *Service) start() {
 func (s *Service) Stop() {
 	log.Info("stopping the executor service...")
 
-	err := s.executor.Deactivate(context.Background())
-	if err != nil {
-		log.With(log.Err(err)).Error("deactivate executor")
+	if s.executor.IsAutoDeactivate() {
+		err := s.executor.Deactivate(context.Background())
+		if err != nil {
+			log.With(log.Err(err)).Error("deactivate executor")
+		}
 	}
 
 	s.isShuttingDown = true

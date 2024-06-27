@@ -45,12 +45,12 @@ func setupRootCommand() *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run executor",
-		Run: func(cmd *cobra.Command, _ []string) {
-			initRunFlags(cmd)
+		Run: func(_ *cobra.Command, _ []string) {
 			wg := Run(cfg)
 			wg.Wait()
 		},
 	}
+	initRunFlags(runCmd)
 	rootCmd.AddCommand(runCmd)
 
 	setupAuxCommands(rootCmd, cfg)
