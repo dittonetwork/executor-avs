@@ -61,7 +61,6 @@ type Options func(*Executor)
 func WithMetrics() Options {
 	return func(e *Executor) {
 		e.metrics.Register()
-		go e.metrics.CollectBackgroundMetrics(e.Client)
 	}
 }
 
@@ -76,7 +75,7 @@ func NewWorkflowsCache() *WorkflowsCache {
 	}
 }
 
-// Atomically checks and adds non-existing workflows to the cache.
+// ConditionalAcquireWorkflowsLock Atomically checks and adds non-existing workflows to the cache.
 func (awc *WorkflowsCache) ConditionalAcquireWorkflowsLock(workflows []models.Workflow) []models.Workflow {
 	// we could lock mutex for each workflow insertion/deletion, but current implementation won't
 	//   degrade execution anyway, and it is easier to debug if concurrent calls had place.
@@ -138,7 +137,7 @@ func (r *Executor) SubscribeToNewBlocks(ctx context.Context) (chan *types.Header
 
 func (r *Executor) Handle(ctx context.Context, blockHash common.Hash) error {
 	if err := r.handle(ctx, blockHash); err != nil {
-		r.metrics.CountErrorsTotal(1)
+		r.metrics.errorsTotal.Add(1)
 
 		return err
 	}
@@ -264,7 +263,7 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 		log.Int("were_sent_workflows", len(acquiredWorkflows)),
 	).Debug("Workflows executed")
 
-	r.metrics.CountExecutedWorkflowsAmountTotal(len(succeededWorkflows))
+	r.metrics.executedWorkflowsAmountTotal.Add(float64(len(succeededWorkflows)))
 
 	return nil
 }
@@ -374,7 +373,7 @@ func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Work
 
 	spentAmount := new(big.Int).Mul(new(big.Int).SetUint64(tx.Gas()), tx.GasPrice())
 
-	r.metrics.CountNativeTokenSpentAmountTotal(primitives.WeiToETH(spentAmount))
+	r.metrics.nativeTokenSpentAmount.Add(primitives.WeiToETH(spentAmount))
 
 	receipt, err := bind.WaitMined(ctx, r.Client, tx)
 	if err != nil {
