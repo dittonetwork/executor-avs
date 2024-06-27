@@ -1,14 +1,11 @@
 package executor
 
 import (
-	"time"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
-	namespace               = "executor"
-	backgroundCheckInterval = 5 * time.Second
+	namespace = "executor"
 )
 
 type Metrics struct {
@@ -16,7 +13,6 @@ type Metrics struct {
 	nativeTokenCurrentBalance    prometheus.Gauge
 	executedWorkflowsAmountTotal prometheus.Counter
 	errorsTotal                  prometheus.Counter
-	operatorCPUUsage             prometheus.Gauge
 }
 
 func NewMetrics() *Metrics {
@@ -50,7 +46,6 @@ func (m *Metrics) Describe(descs chan<- *prometheus.Desc) {
 	m.nativeTokenCurrentBalance.Describe(descs)
 	m.executedWorkflowsAmountTotal.Describe(descs)
 	m.errorsTotal.Describe(descs)
-	m.operatorCPUUsage.Describe(descs)
 }
 
 // Collect implements prometheus.Collector interface.
@@ -59,7 +54,6 @@ func (m *Metrics) Collect(metrics chan<- prometheus.Metric) {
 	m.nativeTokenCurrentBalance.Collect(metrics)
 	m.executedWorkflowsAmountTotal.Collect(metrics)
 	m.errorsTotal.Collect(metrics)
-	m.operatorCPUUsage.Collect(metrics)
 }
 
 func (m *Metrics) Register() {
