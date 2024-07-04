@@ -81,7 +81,7 @@ func (s *Service) start() {
 	for {
 		select {
 		case err = <-sub.Err():
-			log.With(log.Err(err)).Error("subscription error")
+			log.With(log.Err(err)).Fatal("subscription error")
 		case block := <-blocks:
 			wg.Add(1)
 			go func(b *types.Header) {
