@@ -2,8 +2,7 @@ package executor
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"sync"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,6 +19,7 @@ type executor interface {
 	Handle(ctx context.Context, blockHash common.Hash) error
 	Deactivate(ctx context.Context) error
 	Activate(ctx context.Context) error
+	IsAutoDeactivate() bool
 }
 
 type Service struct {
@@ -58,6 +58,7 @@ func (s *Service) GetStatus() api.ServiceStatusType {
 func (s *Service) Start() {
 	go s.start()
 }
+
 func (s *Service) start() {
 	ctx := context.Background()
 
@@ -76,38 +77,38 @@ func (s *Service) start() {
 		log.With(log.Err(err)).Fatal("subscribe to new blocks")
 	}
 
+	var wg sync.WaitGroup
 	for {
 		select {
 		case err = <-sub.Err():
 			log.With(log.Err(err)).Error("subscription error")
 		case block := <-blocks:
-			if err = s.executor.Handle(ctx, block.Hash()); err != nil {
-				log.With(log.Err(err)).Error("handle block")
-			}
+			wg.Add(1)
+			go func(b *types.Header) {
+				defer wg.Done()
+				if err = s.executor.Handle(ctx, b.Hash()); err != nil {
+					log.With(log.Err(err)).Error("handle block")
+				}
+			}(block)
 		}
-	}
-}
 
-func (s *Service) HandleBlock(ctx context.Context, blockHash common.Hash) error {
-	if err := s.executor.Handle(ctx, blockHash); err != nil {
-		if errors.Is(err, ErrUnregisteredExecutor) {
-			if s.isShuttingDown {
-				s.done <- struct{}{}
-			}
-		} else {
-			return fmt.Errorf("executor handle: %w", err)
+		if s.isShuttingDown {
+			break
 		}
 	}
 
-	return nil
+	wg.Wait()
+	s.done <- struct{}{}
 }
 
 func (s *Service) Stop() {
 	log.Info("stopping the executor service...")
 
-	err := s.executor.Deactivate(context.Background())
-	if err != nil {
-		log.With(log.Err(err)).Error("deactivate executor")
+	if s.executor.IsAutoDeactivate() {
+		err := s.executor.Deactivate(context.Background())
+		if err != nil {
+			log.With(log.Err(err)).Error("deactivate executor")
+		}
 	}
 
 	s.isShuttingDown = true

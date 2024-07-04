@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"strings"
 
 	portdep "github.com/dittonetwork/executor-avs/cmd/operator/internal/ports/dep"
 
@@ -174,7 +175,8 @@ func (d *DittoEntryPoint) GetRunWorkflowTx(ctx context.Context, vaultAddr common
 	return tx, nil
 }
 
-func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context, workflows []models.Workflow) (
+func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context,
+	workflows []models.Workflow, estimatedGasMultiplier float64) (
 	*types.Transaction, error,
 ) {
 	wfs := make([]dittoentrypoint.IDittoEntryPointWorkflow, 0, len(workflows))
@@ -190,8 +192,19 @@ func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context, workflows []
 	if err != nil {
 		return nil, fmt.Errorf("make transac opts: %w", err)
 	}
-
+	opts.NoSend = true
 	tx, err := d.dep.RunMultipleWorkflows(opts, wfs)
+	if err != nil {
+		return nil, fmt.Errorf("gas estimation RunMultipleWorkflows: %w", err)
+	}
+
+	opts.NoSend = false
+	// opts.GasPrice = tx.GasPrice()
+	// opts.GasFeeCap = tx.GasFeeCap()
+	// opts.GasTipCap = tx.GasTipCap()
+	opts.GasLimit = uint64(float64(tx.Gas()) * estimatedGasMultiplier)
+
+	tx, err = d.dep.RunMultipleWorkflows(opts, wfs)
 	if err != nil {
 		return nil, fmt.Errorf("call runMultipleWorkflows: %w", err)
 	}
@@ -239,6 +252,27 @@ func (d *DittoEntryPoint) CalculateOperatorAVSRegistrationDigestHash(
 	}
 
 	return stringToSign, nil
+}
+
+func (d *DittoEntryPoint) GetSucceededWorkflows(logs []*types.Log) ([]models.Workflow, error) {
+	succeededWorkflows := make([]models.Workflow, 0, len(logs))
+	for _, vLog := range logs {
+		event, err := d.dep.ParseDittoEntryPointWorkflowSuccess(*vLog)
+
+		if err != nil {
+			if strings.Contains(err.Error(), "no event signature") || strings.Contains(err.Error(), "event signature mismatch") {
+				// These aren't logs you're looking for
+				continue
+			}
+			return nil, fmt.Errorf("ParseDittoEntryPointWorkflowSuccess: %w", err)
+		}
+		succeededWorkflows = append(succeededWorkflows, models.Workflow{
+			VaultAddress: event.Vault,
+			WorkflowID:   event.WorkflowId,
+		})
+	}
+
+	return succeededWorkflows, nil
 }
 
 func (d *DittoEntryPoint) makeTransacOpts(ctx context.Context) (*bind.TransactOpts, error) {

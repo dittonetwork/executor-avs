@@ -166,6 +166,51 @@ func (_c *Executor_Handle_Call) RunAndReturn(run func(context.Context, common.Ha
 	return _c
 }
 
+// IsAutoDeactivate provides a mock function with given fields:
+func (_m *Executor) IsAutoDeactivate() bool {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsAutoDeactivate")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// Executor_IsAutoDeactivate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsAutoDeactivate'
+type Executor_IsAutoDeactivate_Call struct {
+	*mock.Call
+}
+
+// IsAutoDeactivate is a helper method to define mock.On call
+func (_e *Executor_Expecter) IsAutoDeactivate() *Executor_IsAutoDeactivate_Call {
+	return &Executor_IsAutoDeactivate_Call{Call: _e.mock.On("IsAutoDeactivate")}
+}
+
+func (_c *Executor_IsAutoDeactivate_Call) Run(run func()) *Executor_IsAutoDeactivate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Executor_IsAutoDeactivate_Call) Return(_a0 bool) *Executor_IsAutoDeactivate_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Executor_IsAutoDeactivate_Call) RunAndReturn(run func() bool) *Executor_IsAutoDeactivate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SubscribeToNewBlocks provides a mock function with given fields: ctx
 func (_m *Executor) SubscribeToNewBlocks(ctx context.Context) (chan *types.Header, ethereum.Subscription, error) {
 	ret := _m.Called(ctx)
