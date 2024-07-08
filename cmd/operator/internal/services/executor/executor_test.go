@@ -26,6 +26,9 @@ func TestExecutor_Handle(t *testing.T) {
 	ctx := context.Background()
 	nonce := uint64(1)
 	blockNum := big.NewInt(1)
+	ignoreEndBlocks := big.NewInt(3)
+	// for check if executor will be valid in N blocks
+	futureBlockNum := new(big.Int).Add(blockNum, ignoreEndBlocks)
 	block := types.NewBlock(&types.Header{Number: blockNum}, nil, nil, nil)
 	blockHash := common.HexToHash("0x1")
 	contractAddr := common.HexToAddress("0x123")
@@ -59,6 +62,7 @@ func TestExecutor_Handle(t *testing.T) {
 					m := mocks.NewDittoEntryPoint(t)
 					m.EXPECT().IsExecutor(ctx).Return(true, nil)
 					m.EXPECT().IsValidExecutor(ctx, blockNum).Return(true, nil)
+					m.EXPECT().IsValidExecutor(ctx, futureBlockNum).Return(true, nil)
 					m.EXPECT().GetAllActiveWorkflows(ctx).Return(activeWorkflows, nil)
 					m.EXPECT().RunMultipleWorkflows(ctx, activeWorkflows, mock.Anything).Return(tx, nil)
 					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[0].VaultAddress, big.NewInt(1)).
@@ -113,12 +117,31 @@ func TestExecutor_Handle(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "don't execute if end of turn (not valid executor in N blocks)",
+			fields: fields{
+				entryPoint: func(t *testing.T) *mocks.DittoEntryPoint {
+					m := mocks.NewDittoEntryPoint(t)
+					m.EXPECT().IsExecutor(ctx).Return(true, nil)
+					m.EXPECT().IsValidExecutor(ctx, blockNum).Return(true, nil)
+					m.EXPECT().IsValidExecutor(ctx, futureBlockNum).Return(false, nil)
+					return m
+				},
+				client: func(t *testing.T) *mocks.EthereumClient {
+					m := mocks.NewEthereumClient(t)
+					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
+					return m
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "only one (out of 2) workflow could be simulated",
 			fields: fields{
 				entryPoint: func(t *testing.T) *mocks.DittoEntryPoint {
 					m := mocks.NewDittoEntryPoint(t)
 					m.EXPECT().IsExecutor(ctx).Return(true, nil)
 					m.EXPECT().IsValidExecutor(ctx, blockNum).Return(true, nil)
+					m.EXPECT().IsValidExecutor(ctx, futureBlockNum).Return(true, nil)
 					m.EXPECT().GetAllActiveWorkflows(ctx).Return(activeWorkflows, nil)
 					m.EXPECT().RunMultipleWorkflows(ctx, activeWorkflows[:1], mock.Anything).Return(tx, nil)
 					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[0].VaultAddress, big.NewInt(1)).
@@ -143,7 +166,7 @@ func TestExecutor_Handle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := executor.NewExecutor(tt.fields.client(t), tt.fields.entryPoint(t))
+			r := executor.NewExecutor(tt.fields.client(t), tt.fields.entryPoint(t), ignoreEndBlocks)
 			if err := r.Handle(ctx, blockHash); (err != nil) != tt.wantErr {
 				assert.Equal(t, tt.expectedErr, err)
 			}

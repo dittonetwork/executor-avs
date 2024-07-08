@@ -1,6 +1,7 @@
 package app
 
 import (
+	"math/big"
 	"sync"
 	"time"
 
@@ -20,12 +21,14 @@ const (
 	appName                = "AVS-operator"
 	version                = "1.0.0"
 	defaultShutdownTimeout = 30 * time.Second
+	devaultIgnoreEndBlocks = 3
 )
 
 var (
 	env, addr, diagnosticsAddr string
 	shutdownTimeout            time.Duration
 	autoDeactivate             bool
+	ignoreEndBlocks            uint
 )
 
 func initRunFlags(cmd *cobra.Command) {
@@ -35,6 +38,7 @@ func initRunFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&diagnosticsAddr, "diagnostics-addr", ":7070", "Operator diagnostics addr")
 	cmd.Flags().DurationVar(&shutdownTimeout, "shutdown-timeout", defaultShutdownTimeout, "Graceful shutdown timeout")
 	cmd.Flags().BoolVar(&autoDeactivate, "auto-deactivate", true, "Do not deactivate the operator on shutdown")
+	cmd.Flags().UintVar(&ignoreEndBlocks, "ignore-end-block", devaultIgnoreEndBlocks, "Graceful shutdown timeout")
 }
 
 func Run(cfg *CommonFlags) *sync.WaitGroup {
@@ -57,9 +61,14 @@ func Run(cfg *CommonFlags) *sync.WaitGroup {
 	}
 	// services
 	// TODO: refactor WithMetrics passing
-
 	executorService := executor.NewService(
-		executor.NewExecutor(ethClient, entryPoint, executor.WithMetrics(), executor.WithCustomLiveCycle(autoDeactivate)),
+		executor.NewExecutor(
+			ethClient,
+			entryPoint,
+			big.NewInt(int64(ignoreEndBlocks)),
+			executor.WithMetrics(),
+			executor.WithCustomLiveCycle(autoDeactivate),
+		),
 	)
 
 	return service.RunWait(

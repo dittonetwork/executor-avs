@@ -115,9 +115,8 @@ func (d *DittoEntryPoint) IsValidExecutor(ctx context.Context, blockNumber *big.
 	address := crypto.PubkeyToAddress(d.privateKey.PublicKey)
 
 	opts := &bind.CallOpts{
-		Context:     ctx,
-		From:        address,
-		BlockNumber: blockNumber,
+		Context: ctx,
+		From:    address,
 	}
 
 	isValidExecutor, err := d.dep.IsValidExecutor(opts, blockNumber, address)

@@ -52,9 +52,10 @@ type Executor struct {
 	Client     ethereumClient
 	EntryPoint dittoEntryPoint
 
-	metrics        *Metrics
-	workflowsCache *WorkflowsCache
-	autoDeactivate bool
+	metrics         *Metrics
+	workflowsCache  *WorkflowsCache
+	autoDeactivate  bool
+	ignoreEndBlocks *big.Int
 }
 
 type Options func(*Executor)
@@ -123,12 +124,18 @@ func (awc *WorkflowsCache) ReleaseWorkflowsLock(workflows []models.Workflow) {
 	}
 }
 
-func NewExecutor(client ethereumClient, entryPoint dittoEntryPoint, opts ...Options) *Executor {
+func NewExecutor(
+	client ethereumClient,
+	entryPoint dittoEntryPoint,
+	ignoreEndBlocks *big.Int,
+	opts ...Options,
+) *Executor {
 	e := &Executor{
-		Client:         client,
-		EntryPoint:     entryPoint,
-		metrics:        NewMetrics(),
-		workflowsCache: NewWorkflowsCache(),
+		Client:          client,
+		EntryPoint:      entryPoint,
+		metrics:         NewMetrics(),
+		workflowsCache:  NewWorkflowsCache(),
+		ignoreEndBlocks: ignoreEndBlocks,
 	}
 
 	for _, opt := range opts {
@@ -240,6 +247,16 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 
 	if !isValidExecutor {
 		log.Info("Not my turn to execute")
+		return nil
+	}
+
+	willBeValidExecutor, err := r.EntryPoint.IsValidExecutor(ctx, new(big.Int).Add(block.Number(), r.ignoreEndBlocks))
+	if err != nil {
+		return fmt.Errorf("check if executor is valid in future: %w", err)
+	}
+
+	if !willBeValidExecutor {
+		log.Info("Almost end of my turn, not gonna execute")
 		return nil
 	}
 
