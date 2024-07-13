@@ -26,3 +26,5 @@ go.work
 # IDE
 .idea/
 vendor/
+
+dist/

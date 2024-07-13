@@ -1,0 +1,27 @@
+name: PR Testing
+
+on:
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  build-and-test:
+    name: Run Tests
+    uses: ./.github/workflows/_testing.yml
+    with:
+      go_version: '1.22'
+      lint_timeout: '5m'
+
+  # Checkout repo and build a docker image.
+  # This action does not push neither any tags to the git, nor image to ecr.
+  # Just checks if docker image can still be built.
+  build-operator-image:
+    name: Verify Docker Build
+    uses: ./.github/workflows/_build-image.yml
+    with:
+      app: operator
+      docker_tags: ditto-operator-avs:dev
