@@ -1,0 +1,32 @@
+project_name: ditto-avs-operator
+version: 2
+
+before:
+  hooks:
+    - make build
+
+builds:
+  - id: "default"
+    skip: true
+    # can user `prebuild` builder, but only in pro version
+
+dockers:
+  - image_templates:
+      - "dittonetwork/avs-operator:{{ .Tag }}"
+      - "dittonetwork/avs-operator:latest"
+    dockerfile: Dockerfile
+    extra_files:
+      - ./
+    build_flag_templates:
+      - "--build-arg=APP=operator"
+      - "--platform=linux/amd64"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+release:
+  draft: true
