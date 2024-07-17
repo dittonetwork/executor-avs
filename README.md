@@ -79,24 +79,35 @@ Users must specify:
 
 ## AVS Operator Guide
 
-Currently, the operator's flow consists of two parallel actions: running the operator node and explicitly sending transactions to share intentions with the protocol (either to become an active validator or to end validation and safely exit the validators pool). In the future, we could consider automating the emission of explicit transactions as part of the executor node function.
+### Rqeuirements
+1. **AMD64** server running **Linux**
+
+### Dependencies
+1. Docker ([installation guide](https://docs.docker.com/engine/install/))
+
+
+### Instructions
+
+Currently, the operator's flow consists of two parts: firstly, you need to register as AVS operator and set delegated signer, secondly, you need to run Docker container as a daemon. You system will be kept clean, every command is executed inside container. You will find `<contract_addr>` in **Deployments** section below.
 
 Running executor:
 
-1. Download a binary.
-2. Set env variable with private key: `export OPERATOR_PRIVATE_KEY=<operator's hex private key without 0x prefix>`
-3. Register your operator in AVS: `./operator register --node-url <node_url> --contract-addr <contract_addr>`
-4. Set delegated signer: `./bin/operator set-signer --node-url <node_url> --contract-addr <contract_addr> --address <delegated signer address 0x...>`
-5. Replace env variable with delegated signer's private key: `export OPERATOR_PRIVATE_KEY=<<delegated signer's hex private key without 0x prefix>>`
-6. Launch a binary as `./bin/operator run --node-url <node_url> --contract-addr <contract_addr>`
-7. Wait until rearrangement happens (epoch increment). Firstly, you’ll observe *not executor* messages, then it will become either *Not my turn to execute* or info about active workflows in case if it is your turn. You’re now in forever loop, being a part of executors network.
-8. To deregesiter operator from AVS, run `./operator deregister --node-url <node_url> --contract-addr <contract_addr>` with `OPERATOR_PRIVATE_KEY` env set to operator's private key from step 2.
+1. Download Docker container: `docker pull dittonetwork/avs-operator`.
+2. If you don't have key/address pairs yet, you could generate one with `docker run --rm dittonetwork/avs-operator generate`.
+3. Set env variable with private key: `export OPERATOR_PRIVATE_KEY=<operator's hex private key without 0x prefix>`.
+4. Register your operator in AVS: `docker run --rm --env OPERATOR_PRIVATE_KEY dittonetwork/avs-operator register --node-url <node_url> --contract-addr <contract_addr>`.
+5. Set delegated signer: `docker run --rm --env OPERATOR_PRIVATE_KEY dittonetwork/avs-operator set-signer --node-url <node_url> --contract-addr <contract_addr> --address <delegated signer address 0x...>`. Keep in mind this address must have enough ETH to cover initial transactions. We recommend to deposit 0.01 ETH.
+6. Set executor private key env variable with delegated signer's private key: `export EXECUTOR_PRIVATE_KEY=<delegated signer's hex private key without 0x prefix>`.
+7. Launch a daemon as: `docker run --name ditto-operator --env EXECUTOR_PRIVATE_KEY --restart unless-stopped -d dittonetwork/avs-operator run --node-url <node_url> --contract-addr <contract_addr>` . Operator will activate itself automatically.
+8. Wait until rearrangement happens (epoch increment). You could attach to container logs as: `docker logs ditto-operator`. Firstly, you’ll observe *not executor* messages, then it will become either *Not my turn to execute* or info about active workflows in case if it is your turn. You’re now in forever loop, being a part of executors network. Congrats ^^
+9. On graceful shutdown operator will be deactivated automatically (so you won't be slashed after operator is out). However, if you need to force deactivate: `docker run --rm --env EXECUTOR_PRIVATE_KEY dittonetwork/avs-operator deactivate --node-url <node_url> --contract-addr <contract_addr>`.
+10. To deregesiter operator from AVS, run `docker run --rm dittonetwork/avs-operator deregister --node-url <node_url> --contract-addr <contract_addr>` with `OPERATOR_PRIVATE_KEY` env set to operator's private key (refer to step 2).
 
 ## Deployments
 ### Holesky Testnet Deployments
 | Name | Proxy |
 | ---- | ---- |
-| DittoEntryPoint |[`0xb7595CaF0d362bFBF89D9E64e1583B8238841CeB`](https://holesky.etherscan.io/address/0xb7595CaF0d362bFBF89D9E64e1583B8238841CeB)|
+| DittoEntryPoint |[`0x5FD0026a449eeA51Bd1471E4ee8df8607aaECC24`](https://holesky.etherscan.io/address/0x5FD0026a449eeA51Bd1471E4ee8df8607aaECC24)|
 
 ## Developer guide
 
