@@ -310,3 +310,5 @@ issues:
         - gosec
         - noctx
         - wrapcheck
+    - path: "cmd/operator/app/aux.go"
+      text: use of `fmt.Println` forbidden by pattern
