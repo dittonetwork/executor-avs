@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -10,44 +9,42 @@ import (
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )
 
-type CommonFlags struct {
-	NodeURL         string `mapstructure:"node_url"`
-	ContractAddress string `mapstructure:"contract_address"`
-	PrivateKey      string `mapstructure:"private_key"`
+type Config struct {
+	NodeURL            string
+	ContractAddress    string
+	OperatorPrivateKey string
+	ExecutorPrivateKey string
+}
+
+func populateConfigWithEnvs(config *Config) {
+	config.OperatorPrivateKey, _ = os.LookupEnv("OPERATOR_PRIVATE_KEY")
+	config.ExecutorPrivateKey, _ = os.LookupEnv("EXECUTOR_PRIVATE_KEY")
 }
 
 func setupRootCommand() *cobra.Command {
-	cfg := &CommonFlags{}
+	cfg := &Config{}
 
 	var rootCmd = &cobra.Command{
 		Use:   "operator",
-		Short: "Operator manages blockchain interactions",
-		Long:  "Operator is a CLI tool for managing blockchain interactions efficiently.",
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			cfg.PrivateKey = os.Getenv("OPERATOR_PRIVATE_KEY")
-			if cfg.PrivateKey == "" {
-				return errors.New("private key must be provided via environment variable OPERATOR_PRIVATE_KEY")
-			}
-			return nil
-		},
-		Run: func(_ *cobra.Command, _ []string) {},
+		Short: "Ditto AVS Operator",
+		// Run:   func(_ *cobra.Command, _ []string) {},
 	}
 	rootCmd.PersistentFlags().StringVar(&cfg.NodeURL, "node-url", "", "URL of the blockchain node")
-	if err := rootCmd.MarkPersistentFlagRequired("node-url"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s", err)
-	}
 	rootCmd.PersistentFlags().StringVar(&cfg.ContractAddress, "contract-addr", "", "contract address")
-	if err := rootCmd.MarkPersistentFlagRequired("contract-addr"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s", err)
-	}
+
+	populateConfigWithEnvs(cfg)
 
 	// TODO: return errors from CommandFuncs, so the exit code would be non-zero in case of failure
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run executor",
-		Run: func(_ *cobra.Command, _ []string) {
-			wg := Run(cfg)
+		RunE: func(_ *cobra.Command, _ []string) error {
+			wg, err := Run(cfg)
+			if err != nil {
+				return err
+			}
 			wg.Wait()
+			return nil
 		},
 	}
 	initRunFlags(runCmd)
@@ -58,7 +55,7 @@ func setupRootCommand() *cobra.Command {
 	return rootCmd
 }
 
-func setupAuxCommands(rootCmd *cobra.Command, cfg *CommonFlags) {
+func setupAuxCommands(rootCmd *cobra.Command, cfg *Config) {
 	registerCmd := &cobra.Command{
 		Use:          "register",
 		Short:        "Register operator to AVS",
@@ -120,6 +117,14 @@ func setupAuxCommands(rootCmd *cobra.Command, cfg *CommonFlags) {
 		},
 	}
 
+	generateKey := &cobra.Command{
+		Use:   "generate",
+		Short: "Generate key pair",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return GenerateKey()
+		},
+	}
+
 	rootCmd.AddCommand(
 		registerCmd,
 		deregisterCmd,
@@ -127,6 +132,7 @@ func setupAuxCommands(rootCmd *cobra.Command, cfg *CommonFlags) {
 		deactivateCmd,
 		setSignerCmd,
 		arrangeExecutorsCmd,
+		generateKey,
 	)
 }
 

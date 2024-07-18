@@ -83,7 +83,7 @@ endif
 .PHONY: go-lint
 go-lint:
 	@echo "  >  Running golint"
-	golangci-lint run ./...
+	./bin/golangci-lint run ./...
 
 abi-gen:
 	go generate ./cmd/operator/internal/contracts

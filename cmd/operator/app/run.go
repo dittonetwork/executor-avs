@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"math/big"
 	"sync"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/handlers/rest"
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/handlers/rest/endpoint"
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/services/executor"
-	"github.com/dittonetwork/executor-avs/pkg/log"
 	"github.com/dittonetwork/executor-avs/pkg/service"
 )
 
@@ -41,23 +41,27 @@ func initRunFlags(cmd *cobra.Command) {
 	cmd.Flags().UintVar(&ignoreEndBlocks, "ignore-end-block", devaultIgnoreEndBlocks, "Graceful shutdown timeout")
 }
 
-func Run(cfg *CommonFlags) *sync.WaitGroup {
+func Run(cfg *Config) (*sync.WaitGroup, error) {
+	if len(cfg.ExecutorPrivateKey) == 0 {
+		return nil, errors.New("EXECUTOR_PRIVATE_KEY env in not set")
+	}
+
 	service.Init(appName, env, service.WithDiagnosticsServer(diagnosticsAddr))
 
 	conn, err := ethclient.Dial(cfg.NodeURL)
 	if err != nil {
-		log.With(log.Err(err)).Fatal("ether client dial error")
+		return nil, err
 	}
 
 	// adapters
-	ethClient, err := ethereum.NewClient(conn, cfg.ContractAddress, cfg.PrivateKey)
+	ethClient, err := ethereum.NewClient(conn, cfg.ContractAddress, cfg.ExecutorPrivateKey)
 	if err != nil {
-		log.With(log.Err(err)).Fatal("ethereum client init error")
+		return nil, err
 	}
 
-	entryPoint, err := dittoentrypoint.New(conn, cfg.ContractAddress, cfg.PrivateKey)
+	entryPoint, err := dittoentrypoint.New(conn, cfg.ContractAddress, cfg.ExecutorPrivateKey)
 	if err != nil {
-		log.With(log.Err(err)).Fatal("dittoentrypoint init error")
+		return nil, err
 	}
 	// services
 	// TODO: refactor WithMetrics passing
@@ -79,5 +83,5 @@ func Run(cfg *CommonFlags) *sync.WaitGroup {
 			endpoint.NewServicesEndpoint(),
 			endpoint.NewServiceHealthEndpoint(),
 		),
-	)
+	), nil
 }

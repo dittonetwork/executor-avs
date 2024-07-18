@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -19,8 +20,12 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func RegisterOperator(cfg *CommonFlags) error {
-	contractHelper, err := contracts.NewContractHelper(cfg.NodeURL, cfg.PrivateKey)
+func RegisterOperator(cfg *Config) error {
+	if len(cfg.OperatorPrivateKey) == 0 {
+		return errors.New("OPERATOR_PRIVATE_KEY env in not set")
+	}
+
+	contractHelper, err := contracts.NewContractHelper(cfg.NodeURL, cfg.OperatorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("ContractHelper creation: %w", err)
 	}
@@ -33,7 +38,7 @@ func RegisterOperator(cfg *CommonFlags) error {
 		return fmt.Errorf("IServiceManager creation: %w", err)
 	}
 
-	dep, err := initDittoEntryPoint(cfg)
+	dep, err := initDittoEntryPoint(cfg.NodeURL, cfg.ContractAddress, cfg.OperatorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("init ditto entry point: %w", err)
 	}
@@ -59,8 +64,12 @@ func RegisterOperator(cfg *CommonFlags) error {
 	return nil
 }
 
-func DeregisterOperator(cfg *CommonFlags) error {
-	contractHelper, err := contracts.NewContractHelper(cfg.NodeURL, cfg.PrivateKey)
+func DeregisterOperator(cfg *Config) error {
+	if len(cfg.OperatorPrivateKey) == 0 {
+		return errors.New("OPERATOR_PRIVATE_KEY env in not set")
+	}
+
+	contractHelper, err := contracts.NewContractHelper(cfg.NodeURL, cfg.OperatorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("ContractHelper creation: %w", err)
 	}
@@ -88,8 +97,12 @@ func DeregisterOperator(cfg *CommonFlags) error {
 	return nil
 }
 
-func ActivateExecutor(cfg *CommonFlags) error {
-	dep, err := initDittoEntryPoint(cfg)
+func ActivateExecutor(cfg *Config) error {
+	if len(cfg.ExecutorPrivateKey) == 0 {
+		return errors.New("EXECUTOR_PRIVATE_KEY env in not set")
+	}
+
+	dep, err := initDittoEntryPoint(cfg.NodeURL, cfg.ContractAddress, cfg.ExecutorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("init ditto entry point: %w", err)
 	}
@@ -106,8 +119,12 @@ func ActivateExecutor(cfg *CommonFlags) error {
 	return nil
 }
 
-func SetDelegatedSigner(cfg *CommonFlags, signerAddress string) error {
-	dep, err := initDittoEntryPoint(cfg)
+func SetDelegatedSigner(cfg *Config, signerAddress string) error {
+	if len(cfg.OperatorPrivateKey) == 0 {
+		return errors.New("OPERATOR_PRIVATE_KEY env in not set")
+	}
+
+	dep, err := initDittoEntryPoint(cfg.NodeURL, cfg.ContractAddress, cfg.OperatorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("init ditto entry point: %w", err)
 	}
@@ -124,8 +141,12 @@ func SetDelegatedSigner(cfg *CommonFlags, signerAddress string) error {
 	return nil
 }
 
-func DeactivateExecutor(cfg *CommonFlags) error {
-	dep, err := initDittoEntryPoint(cfg)
+func DeactivateExecutor(cfg *Config) error {
+	if len(cfg.ExecutorPrivateKey) == 0 {
+		return errors.New("EXECUTOR_PRIVATE_KEY env in not set")
+	}
+
+	dep, err := initDittoEntryPoint(cfg.NodeURL, cfg.ContractAddress, cfg.ExecutorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("init ditto entry point: %w", err)
 	}
@@ -142,8 +163,12 @@ func DeactivateExecutor(cfg *CommonFlags) error {
 	return nil
 }
 
-func ArrangeExecutors(cfg *CommonFlags) error {
-	dep, err := initDittoEntryPoint(cfg)
+func ArrangeExecutors(cfg *Config) error {
+	if len(cfg.ExecutorPrivateKey) == 0 {
+		return errors.New("EXECUTOR_PRIVATE_KEY env in not set")
+	}
+
+	dep, err := initDittoEntryPoint(cfg.NodeURL, cfg.ContractAddress, cfg.ExecutorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("init ditto entry point: %w", err)
 	}
@@ -168,13 +193,41 @@ func ArrangeExecutors(cfg *CommonFlags) error {
 	return nil
 }
 
-func initDittoEntryPoint(cfg *CommonFlags) (*dittoentrypoint.DittoEntryPoint, error) {
-	conn, err := ethclient.Dial(cfg.NodeURL)
+func GenerateKey() error {
+	privateKey, err := crypto.GenerateKey()
+	if err != nil {
+		return err
+	}
+
+	// Obtain the public key in the uncompressed form.
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Fatal("error casting public key to ECDSA")
+	}
+
+	// Print the private key in hexadecimal format.
+	privateKeyBytes := crypto.FromECDSA(privateKey)
+	fmt.Println("Private Key:", hex.EncodeToString(privateKeyBytes))
+
+	// Generate the Ethereum address from the public key.
+	address := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	fmt.Println("Address:", address)
+
+	return nil
+}
+
+func initDittoEntryPoint(
+	nodeURL string,
+	contractAddr string,
+	privateKey string,
+) (*dittoentrypoint.DittoEntryPoint, error) {
+	conn, err := ethclient.Dial(nodeURL)
 	if err != nil {
 		return nil, fmt.Errorf("ethereum client dial: %w", err)
 	}
 
-	entryPoint, err := dittoentrypoint.New(conn, cfg.ContractAddress, cfg.PrivateKey)
+	entryPoint, err := dittoentrypoint.New(conn, contractAddr, privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("dittoentrypoint client init: %w", err)
 	}
@@ -182,7 +235,7 @@ func initDittoEntryPoint(cfg *CommonFlags) (*dittoentrypoint.DittoEntryPoint, er
 	return entryPoint, nil
 }
 
-func waitForTransaction(cfg *CommonFlags, tx *types.Transaction) error {
+func waitForTransaction(cfg *Config, tx *types.Transaction) error {
 	const pollIntervalSecs = 5
 	ethClient, err := ethclient.Dial(cfg.NodeURL)
 	if err != nil {
