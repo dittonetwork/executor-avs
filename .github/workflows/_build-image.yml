@@ -25,20 +25,23 @@ on:
 jobs:
   build-image:
     runs-on: ubuntu-latest
+    env:
+      dockerhub_username: ${{ secrets.dockerhub_username }}
+      dockerhub_password: ${{ secrets.dockerhub_password }}
     steps:
       - name: Login to Docker Hub
-        if: inputs.dockerhub_username != '' && inputs.dockerhub_password != ''
-        uses: docker/login-action@v1
+        if: ${{ env.dockerhub_username != '' && env.dockerhub_password != '' }}
+        uses: docker/login-action@v3
         with:
-          username: ${{ inputs.dockerhub_username }}
-          password: ${{ inputs.dockerhub_password }}
+          username: ${{ env.dockerhub_username }}
+          password: ${{ env.dockerhub_password }}
 
       - name: Build image
         uses: docker/build-push-action@v5
         with:
           load: true # Loads the image into Docker daemon
           tags: ${{ inputs.docker_tags }}
-          push: ${{ secrets.dockerhub_username != '' && secrets.dockerhub_password != '' }}
+          push: ${{ env.dockerhub_username != '' && env.dockerhub_password != '' }}
           build-args: |
             APP=${{ inputs.app }}
 
