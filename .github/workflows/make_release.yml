@@ -16,33 +16,39 @@ jobs:
   build-and-test:
     uses: ./.github/workflows/_testing.yml
     with:
-      go_version: '1.22'
+      go_version: '1.21'
       lint_timeout: '5m'
 
-  goreleaser:
+  gh-release:
+    name: Create GH Release
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      -
-        name: Set up Go
+
+      - name: Set up Go
         uses: actions/setup-go@v5
-      -
-        name: Login to Docker Hub
-        uses: docker/login-action@v3
+        go-version: '1.21'
+
+      - name: Build operator
+        run: make build
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_RW_PAT }}
-      -
-        name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          version: '~> v2'
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            bin/operator
+
+  push-to-registry:
+    name: Push Docker Image to Registry
+    needs: gh-release
+    uses: ./.github/workflows/_build-image.yml
+    with:
+      app: operator
+      docker_tags: ditto-operator-avs:dev
+    secrets:
+      dockerhub_username: ${{ secrets.DOCKERHUB_USER }}
+      dockerhub_password: ${{ secrets.DOCKERHUB_RW_PAT }}
