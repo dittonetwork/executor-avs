@@ -38,9 +38,8 @@ The diagram shows the following steps:
 		1. **Retrieve active workflows from DEP** - Retrieve active workflows from DEP.
 		2. **Determine a batch of workflows that should be executed** - Send a transactions on-chain.
 	2. If the operator is an active validator, they will:
-		1. **Generate proof of possible workflows but do not send transactions** - Generate proof of possible workflows
-		   but do not send transactions.
-		2. **Send verdict with ZK proofs to DAC** - Send verdict with ZK proofs to Ditto Attestation Center.
+		1. **Generate proof of execution of the workflows referring missing executions** - Send verdict with ZK proofs
+		   to Ditto Attestation Center.
 
 ## Operator roles
 
@@ -112,8 +111,8 @@ Users must specify:
 **Dependencies:**
 
 - Docker ([installation guide](https://docs.docker.com/engine/install/))
-- WSS RPC endpoint (e.g., Infura, Alchemy, etc.) ([Infura guide](https://infura.io/docs/gettingStarted/connect-to-infura))
-
+- WSS RPC endpoint (e.g., Infura, Alchemy,
+  etc.) ([Infura guide](https://infura.io/docs/gettingStarted/connect-to-infura))
 
 ### Usage
 
@@ -190,7 +189,6 @@ $ docker run --rm --env OPERATOR_PRIVATE_KEY dittonetwork/avs-operator set-signe
 2. `contract-addr` — Specifies the address of the Ditto Entry Point contract.
 3. `address` — Specifies the address of the delegated signer.
 
-
 **Example:**
 
 Running the command:
@@ -201,7 +199,6 @@ $ docker run --rm --env OPERATOR_PRIVATE_KEY dittonetwork/avs-operator set-signe
 	--contract-addr 0x5FD0026a449eeA51Bd1471E4ee8df8607aaECC24 \
 	--address 0x...
 ```
-
 
 ### 5. Launch a daemon
 
@@ -239,7 +236,6 @@ $ docker run --name ditto-operator --env EXECUTOR_PRIVATE_KEY --restart unless-s
 	--contract-addr 0x5FD0026a449eeA51Bd1471E4ee8df8607aaECC24
 ```
 
-
 ### 6. Monitor AVS operator logs
 
 ```bash
@@ -268,7 +264,6 @@ Arguments:
 > then it will become either *Not my turn to execute* or info about active workflows in case if it is your turn.
 > You’re now in a forever loop, being a part of the executors network. Congrats ^^
 
-
 ### 8. Deregister operator
 
 ```bash
@@ -292,7 +287,6 @@ $ docker run --rm --env OPERATOR_PRIVATE_KEY dittonetwork/avs-operator deregiste
 	--node-url wss://silent-tame-seed.ethereum-holesky.quiknode.pro/1234 \
 	--contract-addr 0x5FD0026a449eeA51Bd1471E4ee8df8607aaECC24
 ```
-
 
 ## Deployments
 
