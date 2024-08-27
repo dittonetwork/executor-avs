@@ -192,7 +192,7 @@
                         "uid": "PBFA97CFB590B2093"
                     },
                     "editorMode": "code",
-                    "expr": "sum(rate(executor_native_token_spent_amount{job=\"operator\"}[5m])) by (job)",
+                    "expr": "sum(executor_native_token_spent_amount{job=\"operator\"})) by (job)",
                     "instant": false,
                     "legendFormat": "__auto",
                     "range": true,

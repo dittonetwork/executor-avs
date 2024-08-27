@@ -288,6 +288,18 @@ $ docker run --rm --env OPERATOR_PRIVATE_KEY dittonetwork/avs-operator deregiste
 	--contract-addr 0x5FD0026a449eeA51Bd1471E4ee8df8607aaECC24
 ```
 
+## Exported metrics
+By default, executor exports Prometheus metrics at `:7070/metrics` (port could be set via `--diagnostics-addr` argument). You could either implement your own scraping logic or use
+Grafana + Prometheus setting, provided in [_prometheus-grafana_](prometheus-grafana) folder.
+Refer to the related [_README.md_](prometheus-grafana/README.md) file for more info.
+
+| Metric Name                       | Type    | Description                              |
+|-----------------------------------|---------|------------------------------------------|
+| `native_token_spent_amount`       | Gauge   | Total amount of native token spent       |
+| `native_token_current_balance`    | Gauge   | Current balance of native token          |
+| `executed_workflows_amount_total` | Counter | Total amount of executed workflows       |
+| `errors_total`                    | Counter | Total amount of operator internal errors |
+
 ## Deployments
 
 ### Holesky Testnet Deployments
