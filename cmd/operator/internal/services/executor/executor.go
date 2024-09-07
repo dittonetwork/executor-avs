@@ -291,6 +291,7 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 		log.Int("were_sent_workflows", len(acquiredWorkflows)),
 	).Debug("Workflows executed")
 
+	r.metrics.sentWorkflowsAmountTotal.Add(float64(len(acquiredWorkflows)))
 	r.metrics.executedWorkflowsAmountTotal.Add(float64(len(succeededWorkflows)))
 
 	return nil
@@ -388,6 +389,7 @@ func hexStringToBool(hexStr string) (bool, error) {
 func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Workflow) ([]models.Workflow, error) {
 	gasLimitMultiplier := 1.5
 	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, workflows, gasLimitMultiplier)
+	txInMempoolTs := time.Now()
 	if err != nil {
 		return nil, fmt.Errorf("run multiple workflows: %w", err)
 	}
@@ -403,11 +405,14 @@ func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Work
 
 	r.metrics.nativeTokenSpentAmount.Add(primitives.WeiToETH(spentAmount))
 
+	log.With(log.String("tx_hash", tx.Hash().String())).Debug("waiting for transaction to appear on chain")
 	receipt, err := bind.WaitMined(ctx, r.Client, tx)
 	if err != nil {
 		return nil, fmt.Errorf("waiting for RunMultipleWorkflows tx: %w", err)
 	}
-	log.With(log.String("tx_hash", tx.Hash().String())).Debug("waiting for transaction to appear on chain")
+
+	r.metrics.miningLatency.Add(float64(time.Since(txInMempoolTs).Milliseconds()))
+
 	if receipt.Status == types.ReceiptStatusFailed {
 		return nil, fmt.Errorf("RunMultipleWorkflows failed on chain, status: %d", receipt.Status)
 	}
