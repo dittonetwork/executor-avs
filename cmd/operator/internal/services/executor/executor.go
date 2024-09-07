@@ -52,10 +52,11 @@ type Executor struct {
 	Client     ethereumClient
 	EntryPoint dittoEntryPoint
 
-	metrics         *Metrics
-	workflowsCache  *WorkflowsCache
-	autoDeactivate  bool
-	ignoreEndBlocks *big.Int
+	metrics           *Metrics
+	workflowsCache    *WorkflowsCache
+	autoDeactivate    bool
+	ignoreEndBlocks   *big.Int
+	simulationTimeout time.Duration
 }
 
 type Options func(*Executor)
@@ -84,41 +85,43 @@ func NewWorkflowsCache() *WorkflowsCache {
 }
 
 // ConditionalAcquireWorkflowsLock Atomically checks and adds non-existing workflows to the cache.
-func (awc *WorkflowsCache) ConditionalAcquireWorkflowsLock(workflows []models.Workflow) []models.Workflow {
+// It is done to prevent concurrent checks of the same workflow by different blocks handlers. Since every handler
+// waits for receipts, lack of such exclution could lead to significant duplication.
+func (wc *WorkflowsCache) ConditionalAcquireWorkflowsLock(workflows []models.Workflow) []models.Workflow {
 	// we could lock mutex for each workflow insertion/deletion, but current implementation won't
 	//   degrade execution anyway, and it is easier to debug if concurrent calls had place.
-	awc.mu.Lock()
-	defer awc.mu.Unlock()
+	wc.mu.Lock()
+	defer wc.mu.Unlock()
 
 	var inserted []models.Workflow
 	for _, workflow := range workflows {
 		address := workflow.VaultAddress
 		workflowID := workflow.WorkflowID.String()
 
-		if _, exists := awc.data[address]; !exists {
-			awc.data[address] = make(map[string]bool)
+		if _, exists := wc.data[address]; !exists {
+			wc.data[address] = make(map[string]bool)
 		}
 
-		if _, exists := awc.data[address][workflowID]; !exists {
-			awc.data[address][workflowID] = true
+		if _, exists := wc.data[address][workflowID]; !exists {
+			wc.data[address][workflowID] = true
 			inserted = append(inserted, workflow)
 		}
 	}
 	return inserted
 }
 
-func (awc *WorkflowsCache) ReleaseWorkflowsLock(workflows []models.Workflow) {
-	awc.mu.Lock()
-	defer awc.mu.Unlock()
+func (wc *WorkflowsCache) ReleaseWorkflowsLock(workflows []models.Workflow) {
+	wc.mu.Lock()
+	defer wc.mu.Unlock()
 
 	for _, workflow := range workflows {
 		address := workflow.VaultAddress
 		workflowID := workflow.WorkflowID.String()
 
-		if workflows, exists := awc.data[address]; exists {
+		if workflows, exists := wc.data[address]; exists {
 			delete(workflows, workflowID)
 			if len(workflows) == 0 {
-				delete(awc.data, address)
+				delete(wc.data, address)
 			}
 		}
 	}
@@ -128,14 +131,16 @@ func NewExecutor(
 	client ethereumClient,
 	entryPoint dittoEntryPoint,
 	ignoreEndBlocks *big.Int,
+	simulationTimeout time.Duration,
 	opts ...Options,
 ) *Executor {
 	e := &Executor{
-		Client:          client,
-		EntryPoint:      entryPoint,
-		metrics:         NewMetrics(),
-		workflowsCache:  NewWorkflowsCache(),
-		ignoreEndBlocks: ignoreEndBlocks,
+		Client:            client,
+		EntryPoint:        entryPoint,
+		metrics:           NewMetrics(),
+		workflowsCache:    NewWorkflowsCache(),
+		ignoreEndBlocks:   ignoreEndBlocks,
+		simulationTimeout: simulationTimeout,
 	}
 
 	for _, opt := range opts {
@@ -196,12 +201,12 @@ func (r *Executor) Deactivate(ctx context.Context) error {
 	return nil
 }
 
-func (r *Executor) waitForTransaction(_ context.Context, tx *types.Transaction) {
+func (r *Executor) waitForTransaction(ctx context.Context, tx *types.Transaction) {
 	const pollIntervalSecs = 5
 
 	log.Info("Waiting for transaction to complete...")
 	for {
-		receipt, err := r.Client.TransactionReceipt(context.Background(), tx.Hash())
+		receipt, err := r.Client.TransactionReceipt(ctx, tx.Hash())
 		if receipt != nil {
 			log.With(
 				log.String("tx_hash", receipt.TxHash.Hex()),
@@ -226,7 +231,7 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 		return ErrBlockIsNil
 	}
 
-	log.With(log.Int64("block_number", block.Number().Int64())).Info("checking if it is executor...")
+	log.With(log.Int64("block_number", block.Number().Int64())).Info("processing block")
 
 	isExecutor, err := r.EntryPoint.IsExecutor(ctx)
 	if err != nil {
@@ -316,9 +321,11 @@ func (r *Executor) getExecutableWorkflows(ctx context.Context, blockNum *big.Int
 
 		go func(workflow *models.Workflow) {
 			defer wg.Done()
+			timeoutCtx, cancel := context.WithTimeout(ctx, r.simulationTimeout)
+			defer cancel()
 
 			var canRun bool
-			canRun, err = r.simulate(ctx, *workflow, blockNum)
+			canRun, err = r.simulate(timeoutCtx, *workflow, blockNum)
 			if err != nil {
 				errCh <- fmt.Errorf("simulate workflow %d: %w", workflow.WorkflowID.Int64(), err)
 				return
@@ -327,7 +334,7 @@ func (r *Executor) getExecutableWorkflows(ctx context.Context, blockNum *big.Int
 				log.String("vault_addr", workflow.VaultAddress.Hex()),
 				log.String("workflow_id", workflow.WorkflowID.String()),
 				log.Bool("result", canRun),
-			).Debug("Simulation done")
+			).Debug("simulation done")
 			workflow.CouldBeExecuted = canRun
 		}(workflow)
 	}
@@ -389,7 +396,7 @@ func hexStringToBool(hexStr string) (bool, error) {
 func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Workflow) ([]models.Workflow, error) {
 	gasLimitMultiplier := 1.5
 	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, workflows, gasLimitMultiplier)
-	txInMempoolTs := time.Now()
+	txInMempoolTS := time.Now()
 	if err != nil {
 		return nil, fmt.Errorf("run multiple workflows: %w", err)
 	}
@@ -410,13 +417,13 @@ func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Work
 	if err != nil {
 		return nil, fmt.Errorf("waiting for RunMultipleWorkflows tx: %w", err)
 	}
+	log.With(log.String("tx_hash", tx.Hash().String())).Debug("transaction is on chain")
 
-	r.metrics.miningLatency.Add(float64(time.Since(txInMempoolTs).Milliseconds()))
+	r.metrics.miningLatency.Add(float64(time.Since(txInMempoolTS).Milliseconds()))
 
 	if receipt.Status == types.ReceiptStatusFailed {
 		return nil, fmt.Errorf("RunMultipleWorkflows failed on chain, status: %d", receipt.Status)
 	}
-	log.With(log.String("tx_hash", tx.Hash().String())).Debug("transaction is on chain")
 
 	succeededWorkflows, err := r.EntryPoint.GetSucceededWorkflows(receipt.Logs)
 	if err != nil {

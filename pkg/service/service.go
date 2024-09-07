@@ -10,8 +10,6 @@ import (
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )
 
-const signalAmount = 2
-
 type Service struct {
 	appName         string
 	diagnosticsAddr string
@@ -56,23 +54,6 @@ type StartStopper interface {
 	Stop()
 }
 
-func Run(services ...StartStopper) {
-	log.Info("starting app")
-	for _, s := range services {
-		s.Start()
-	}
-	SetReady(true)
-	log.Info("app ready")
-	log.With(log.String("signal", Wait([]os.Signal{syscall.SIGTERM, syscall.SIGINT}).String())).Info("received signal")
-	log.Info("stopping")
-	SetReady(false)
-	// stop in reverse order
-	for i := range services {
-		services[len(services)-i-1].Stop()
-	}
-	log.Info("bye 👋")
-}
-
 func RunWait(services ...StartStopper) *sync.WaitGroup {
 	log.Info("starting app")
 	for _, s := range services {
@@ -84,7 +65,7 @@ func RunWait(services ...StartStopper) *sync.WaitGroup {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	signals := make(chan os.Signal, signalAmount)
+	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
 
 	go func() {
@@ -92,13 +73,16 @@ func RunWait(services ...StartStopper) *sync.WaitGroup {
 		firstSignal := true
 		for sig := range signals {
 			log.With(log.String("signal", sig.String())).Info("received signal")
-			if !firstSignal {
+			if firstSignal {
+				firstSignal = false
+				go func() {
+					shutdownServices(services)
+					close(signals)
+				}()
+			} else {
 				log.Info("Forcing shutdown due to second signal")
 				os.Exit(1) // Force exit if second signal received during shutdown
 			}
-			firstSignal = false
-			log.Info("Initiating graceful shutdown...")
-			go shutdownServices(services)
 		}
 	}()
 	return wg

@@ -20,12 +20,12 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func RegisterOperator(cfg *Config) error {
+func RegisterOperator(ctx context.Context, cfg *Config) error {
 	if len(cfg.OperatorPrivateKey) == 0 {
 		return errors.New("OPERATOR_PRIVATE_KEY env in not set")
 	}
 
-	contractHelper, err := contracts.NewContractHelper(cfg.NodeURL, cfg.OperatorPrivateKey)
+	contractHelper, err := contracts.NewContractHelper(ctx, cfg.NodeURL, cfg.OperatorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("ContractHelper creation: %w", err)
 	}
@@ -58,18 +58,18 @@ func RegisterOperator(cfg *Config) error {
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().Hex())).Info("Register transaction created")
-	if waitForTransaction(cfg, tx) != nil {
+	if waitForTransaction(ctx, cfg, tx) != nil {
 		return fmt.Errorf("wait for tx receipt: %w", err)
 	}
 	return nil
 }
 
-func DeregisterOperator(cfg *Config) error {
+func DeregisterOperator(ctx context.Context, cfg *Config) error {
 	if len(cfg.OperatorPrivateKey) == 0 {
 		return errors.New("OPERATOR_PRIVATE_KEY env in not set")
 	}
 
-	contractHelper, err := contracts.NewContractHelper(cfg.NodeURL, cfg.OperatorPrivateKey)
+	contractHelper, err := contracts.NewContractHelper(ctx, cfg.NodeURL, cfg.OperatorPrivateKey)
 	if err != nil {
 		return fmt.Errorf("ContractHelper creation: %w", err)
 	}
@@ -91,13 +91,13 @@ func DeregisterOperator(cfg *Config) error {
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().Hex())).Info("Register transaction created")
-	if waitForTransaction(cfg, tx) != nil {
+	if waitForTransaction(ctx, cfg, tx) != nil {
 		return fmt.Errorf("wait for tx receipt: %w", err)
 	}
 	return nil
 }
 
-func ActivateExecutor(cfg *Config) error {
+func ActivateExecutor(ctx context.Context, cfg *Config) error {
 	if len(cfg.ExecutorPrivateKey) == 0 {
 		return errors.New("EXECUTOR_PRIVATE_KEY env in not set")
 	}
@@ -113,13 +113,13 @@ func ActivateExecutor(cfg *Config) error {
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().Hex())).Info("Register transaction created")
-	if waitForTransaction(cfg, tx) != nil {
+	if waitForTransaction(ctx, cfg, tx) != nil {
 		return fmt.Errorf("wait for tx receipt: %w", err)
 	}
 	return nil
 }
 
-func SetDelegatedSigner(cfg *Config, signerAddress string) error {
+func SetDelegatedSigner(ctx context.Context, cfg *Config, signerAddress string) error {
 	if len(cfg.OperatorPrivateKey) == 0 {
 		return errors.New("OPERATOR_PRIVATE_KEY env in not set")
 	}
@@ -135,13 +135,13 @@ func SetDelegatedSigner(cfg *Config, signerAddress string) error {
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().Hex())).Info("Register transaction created")
-	if waitForTransaction(cfg, tx) != nil {
+	if waitForTransaction(ctx, cfg, tx) != nil {
 		return fmt.Errorf("wait for tx receipt: %w", err)
 	}
 	return nil
 }
 
-func DeactivateExecutor(cfg *Config) error {
+func DeactivateExecutor(ctx context.Context, cfg *Config) error {
 	if len(cfg.ExecutorPrivateKey) == 0 {
 		return errors.New("EXECUTOR_PRIVATE_KEY env in not set")
 	}
@@ -157,13 +157,13 @@ func DeactivateExecutor(cfg *Config) error {
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().Hex())).Info("Register transaction created")
-	if waitForTransaction(cfg, tx) != nil {
+	if waitForTransaction(ctx, cfg, tx) != nil {
 		return fmt.Errorf("wait for tx receipt: %w", err)
 	}
 	return nil
 }
 
-func ArrangeExecutors(cfg *Config) error {
+func ArrangeExecutors(ctx context.Context, cfg *Config) error {
 	if len(cfg.ExecutorPrivateKey) == 0 {
 		return errors.New("EXECUTOR_PRIVATE_KEY env in not set")
 	}
@@ -173,7 +173,6 @@ func ArrangeExecutors(cfg *Config) error {
 		return fmt.Errorf("init ditto entry point: %w", err)
 	}
 
-	ctx := context.Background()
 	executorsAmount, err := dep.GetAmountExecutors(ctx)
 	if err != nil {
 		return fmt.Errorf("GetAmountExecutors: %w", err)
@@ -187,7 +186,7 @@ func ArrangeExecutors(cfg *Config) error {
 	}
 
 	log.With(log.String("tx_hash", tx.Hash().Hex())).Info("Register transaction created")
-	if waitForTransaction(cfg, tx) != nil {
+	if waitForTransaction(ctx, cfg, tx) != nil {
 		return fmt.Errorf("wait for tx receipt: %w", err)
 	}
 	return nil
@@ -235,16 +234,16 @@ func initDittoEntryPoint(
 	return entryPoint, nil
 }
 
-func waitForTransaction(cfg *Config, tx *types.Transaction) error {
+func waitForTransaction(ctx context.Context, cfg *Config, tx *types.Transaction) error {
 	const pollIntervalSecs = 5
-	ethClient, err := ethclient.Dial(cfg.NodeURL)
+	ethClient, err := ethclient.DialContext(ctx, cfg.NodeURL)
 	if err != nil {
 		return fmt.Errorf("ethereum client dial: %w", err)
 	}
 
 	log.Info("Waiting for transaction to complete...")
 	for {
-		receipt, innerErr := ethClient.TransactionReceipt(context.Background(), tx.Hash())
+		receipt, innerErr := ethClient.TransactionReceipt(ctx, tx.Hash())
 		if receipt != nil {
 			log.With(
 				log.String("tx_hash", receipt.TxHash.Hex()),

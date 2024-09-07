@@ -1,8 +1,10 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -56,12 +58,15 @@ func setupRootCommand() *cobra.Command {
 }
 
 func setupAuxCommands(rootCmd *cobra.Command, cfg *Config) {
+	const defaultTimeout = 10 * time.Second // TODO: make it an arg
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
 	registerCmd := &cobra.Command{
 		Use:          "register",
 		Short:        "Register operator to AVS",
 		SilenceUsage: true,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return RegisterOperator(cfg)
+			return RegisterOperator(ctx, cfg)
 		},
 	}
 
@@ -70,7 +75,7 @@ func setupAuxCommands(rootCmd *cobra.Command, cfg *Config) {
 		Short:        "Deregister operator from AVS",
 		SilenceUsage: true,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return DeregisterOperator(cfg)
+			return DeregisterOperator(ctx, cfg)
 		},
 	}
 
@@ -83,7 +88,7 @@ func setupAuxCommands(rootCmd *cobra.Command, cfg *Config) {
 			if err != nil {
 				return fmt.Errorf("error retrieving address arg: %w", err)
 			}
-			return SetDelegatedSigner(cfg, address)
+			return SetDelegatedSigner(ctx, cfg, address)
 		},
 	}
 	setSignerCmd.Flags().String("address", "", "delegated signer address")
@@ -96,7 +101,7 @@ func setupAuxCommands(rootCmd *cobra.Command, cfg *Config) {
 		Short:        "Activate executor",
 		SilenceUsage: true,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return ActivateExecutor(cfg)
+			return ActivateExecutor(ctx, cfg)
 		},
 	}
 
@@ -105,7 +110,7 @@ func setupAuxCommands(rootCmd *cobra.Command, cfg *Config) {
 		Short:        "Deactivate executor",
 		SilenceUsage: true,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return DeactivateExecutor(cfg)
+			return DeactivateExecutor(ctx, cfg)
 		},
 	}
 
@@ -113,7 +118,7 @@ func setupAuxCommands(rootCmd *cobra.Command, cfg *Config) {
 		Use:   "arrange",
 		Short: "Arrange executors",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return ArrangeExecutors(cfg)
+			return ArrangeExecutors(ctx, cfg)
 		},
 	}
 
