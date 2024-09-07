@@ -198,9 +198,12 @@ func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context,
 	}
 
 	opts.NoSend = false
-	// opts.GasPrice = tx.GasPrice()
-	// opts.GasFeeCap = tx.GasFeeCap()
-	// opts.GasTipCap = tx.GasTipCap()
+
+	err = d.makeGasPriceOpts(ctx, opts, big.NewFloat(estimatedGasMultiplier))
+	if err != nil {
+		return nil, fmt.Errorf("make gas price opts: %w", err)
+	}
+
 	opts.GasLimit = uint64(float64(tx.Gas()) * estimatedGasMultiplier)
 
 	tx, err = d.dep.RunMultipleWorkflows(opts, wfs)
@@ -286,4 +289,22 @@ func (d *DittoEntryPoint) makeTransacOpts(ctx context.Context) (*bind.TransactOp
 	}
 
 	return opts, nil
+}
+
+func (d *DittoEntryPoint) makeGasPriceOpts(ctx context.Context, opts *bind.TransactOpts, multiplier *big.Float) error {
+	gasPrice, err := d.client.SuggestGasPrice(ctx)
+	if err != nil {
+		return fmt.Errorf("get gas price: %w", err)
+	}
+
+	gasPriceFloat := new(big.Float).SetInt(gasPrice)
+	adjustedGasPriceFloat := new(big.Float).Mul(gasPriceFloat, multiplier)
+	adjustedGasPrice := new(big.Int)
+	adjustedGasPriceFloat.Int(adjustedGasPrice)
+
+	opts.GasPrice = adjustedGasPrice
+	opts.GasFeeCap = new(big.Int).Add(adjustedGasPrice, big.NewInt(3))
+	opts.GasTipCap = big.NewInt(2. * 1e9)
+
+	return nil
 }
