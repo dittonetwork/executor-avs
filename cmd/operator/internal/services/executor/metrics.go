@@ -11,7 +11,9 @@ const (
 type Metrics struct {
 	nativeTokenSpentAmount       prometheus.Gauge
 	nativeTokenCurrentBalance    prometheus.Gauge
+	miningLatency                prometheus.Gauge
 	executedWorkflowsAmountTotal prometheus.Counter
+	sentWorkflowsAmountTotal     prometheus.Counter
 	errorsTotal                  prometheus.Counter
 }
 
@@ -27,10 +29,20 @@ func NewMetrics() *Metrics {
 			Name:      "native_token_current_balance",
 			Help:      "Current balance of native token",
 		}),
+		miningLatency: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "settlement_latency",
+			Help:      "Milliseconds passed between broadcast and inclusion into block",
+		}),
 		executedWorkflowsAmountTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: namespace,
 			Name:      "executed_workflows_amount_total",
 			Help:      "Total amount of executed workflows",
+		}),
+		sentWorkflowsAmountTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "sent_workflows_amount_total",
+			Help:      "Total amount of workflows sent to chain",
 		}),
 		errorsTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: namespace,
