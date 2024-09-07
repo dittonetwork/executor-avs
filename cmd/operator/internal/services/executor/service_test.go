@@ -2,7 +2,6 @@
 package executor
 
 import (
-	"context"
 	"math/big"
 	"testing"
 	"time"
@@ -44,16 +43,14 @@ func (m *mockSubscription) Err() <-chan error {
 }
 
 func TestService_GracefulShutdown(t *testing.T) {
-	ctx := context.Background()
-
 	header := &types.Header{Number: big.NewInt(100)}
 	headersChan := make(chan *types.Header, 1)
 
 	executorHandler := mocks.NewExecutor(t)
 	executorHandler.EXPECT().Activate(mock.Anything).Return(nil)
-	executorHandler.EXPECT().Handle(ctx, header.Hash()).Return(ErrUnregisteredExecutor)
+	executorHandler.EXPECT().Handle(mock.Anything, header.Hash()).Return(ErrUnregisteredExecutor)
 	executorHandler.EXPECT().IsAutoDeactivate().Return(true)
-	executorHandler.EXPECT().Deactivate(ctx).Return(nil)
+	executorHandler.EXPECT().Deactivate(mock.Anything).Return(nil)
 	executorHandler.EXPECT().SubscribeToNewBlocks(mock.Anything).Return(headersChan, NewMockSubscription(), nil)
 
 	service := NewService(executorHandler)
@@ -61,10 +58,12 @@ func TestService_GracefulShutdown(t *testing.T) {
 
 	service.Start()
 
+	time.Sleep(100 * time.Millisecond)
 	require.Equal(t, api.ServiceStatusTypeActive, service.GetStatus())
 
-	go service.Stop()
-	time.Sleep(100 * time.Millisecond)
+	headersChan <- header
+	time.Sleep(time.Second)
+	service.Stop()
 
 	headersChan <- header
 	time.Sleep(time.Second)

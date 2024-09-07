@@ -87,3 +87,7 @@ func (c *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*t
 func (c *Client) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
 	return c.client.CodeAt(ctx, account, blockNumber)
 }
+
+func (c *Client) Shutdown() {
+	c.client.Close()
+}

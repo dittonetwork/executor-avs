@@ -25,17 +25,15 @@ type executor interface {
 type Service struct {
 	executor executor
 
-	status         api.ServiceStatusType
-	isShuttingDown bool
-	done           chan struct{}
+	status api.ServiceStatusType
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func NewService(executorHandler executor) *Service {
 	return &Service{
-		executor:       executorHandler,
-		status:         api.ServiceStatusTypeDown,
-		isShuttingDown: false,
-		done:           make(chan struct{}),
+		executor: executorHandler,
+		status:   api.ServiceStatusTypeDown,
 	}
 }
 
@@ -56,49 +54,49 @@ func (s *Service) GetStatus() api.ServiceStatusType {
 }
 
 func (s *Service) Start() {
-	go s.start()
+	go s.run()
 }
 
-func (s *Service) start() {
-	ctx := context.Background()
+func (s *Service) run() {
+	s.ctx, s.cancel = context.WithCancel(context.Background())
 
 	log.Info("starting executor")
 	s.status = api.ServiceStatusTypeActive
 
 	go func() {
-		err := s.executor.Activate(ctx)
+		err := s.executor.Activate(s.ctx)
 		if err != nil {
 			log.With(log.Err(err)).Fatal("activate executor")
 		}
 	}()
 
-	blocks, sub, err := s.executor.SubscribeToNewBlocks(ctx)
+	blocks, sub, err := s.executor.SubscribeToNewBlocks(s.ctx)
 	if err != nil {
 		log.With(log.Err(err)).Fatal("subscribe to new blocks")
 	}
+	defer sub.Unsubscribe()
 
 	var wg sync.WaitGroup
-	for {
-		select {
-		case err = <-sub.Err():
-			log.With(log.Err(err)).Fatal("subscription error")
-		case block := <-blocks:
-			wg.Add(1)
-			go func(b *types.Header) {
-				defer wg.Done()
-				if err = s.executor.Handle(ctx, b.Hash()); err != nil {
-					log.With(log.Err(err)).Error("handle block")
-				}
-			}(block)
+	func() {
+		for {
+			select {
+			case err = <-sub.Err():
+				log.With(log.Err(err)).Fatal("subscription error")
+			case block := <-blocks:
+				wg.Add(1)
+				go func(b *types.Header) {
+					defer wg.Done()
+					if err = s.executor.Handle(s.ctx, b.Hash()); err != nil {
+						log.With(log.Err(err)).Error("handle block")
+					}
+				}(block)
+			case <-s.ctx.Done():
+				return
+			}
 		}
-
-		if s.isShuttingDown {
-			break
-		}
-	}
+	}()
 
 	wg.Wait()
-	s.done <- struct{}{}
 }
 
 func (s *Service) Stop() {
@@ -111,8 +109,7 @@ func (s *Service) Stop() {
 		}
 	}
 
-	s.isShuttingDown = true
-	<-s.done
+	s.cancel()
 	s.status = api.ServiceStatusTypeDown
 
 	log.Info("executor is stopped 🫡")

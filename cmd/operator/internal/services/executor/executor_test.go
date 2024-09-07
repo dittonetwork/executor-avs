@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -23,7 +24,6 @@ func TestExecutor_Handle(t *testing.T) {
 	type dittoEntryPointMockBuilder func(*testing.T) *mocks.DittoEntryPoint
 
 	// Test values
-	ctx := context.Background()
 	nonce := uint64(1)
 	blockNum := big.NewInt(1)
 	ignoreEndBlocks := big.NewInt(3)
@@ -60,22 +60,22 @@ func TestExecutor_Handle(t *testing.T) {
 			fields: fields{
 				entryPoint: func(t *testing.T) *mocks.DittoEntryPoint {
 					m := mocks.NewDittoEntryPoint(t)
-					m.EXPECT().IsExecutor(ctx).Return(true, nil)
-					m.EXPECT().IsValidExecutor(ctx, blockNum).Return(true, nil)
-					m.EXPECT().IsValidExecutor(ctx, futureBlockNum).Return(true, nil)
-					m.EXPECT().GetAllActiveWorkflows(ctx).Return(activeWorkflows, nil)
-					m.EXPECT().RunMultipleWorkflows(ctx, activeWorkflows, mock.Anything).Return(tx, nil)
-					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[0].VaultAddress, big.NewInt(1)).
+					m.EXPECT().IsExecutor(mock.Anything).Return(true, nil)
+					m.EXPECT().IsValidExecutor(mock.Anything, blockNum).Return(true, nil)
+					m.EXPECT().IsValidExecutor(mock.Anything, futureBlockNum).Return(true, nil)
+					m.EXPECT().GetAllActiveWorkflows(mock.Anything).Return(activeWorkflows, nil)
+					m.EXPECT().RunMultipleWorkflows(mock.Anything, activeWorkflows, mock.Anything).Return(tx, nil)
+					m.EXPECT().GetRunWorkflowTx(mock.Anything, activeWorkflows[0].VaultAddress, big.NewInt(1)).
 						Return(wfSimulatedTx1, nil)
-					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[1].VaultAddress, big.NewInt(2)).
+					m.EXPECT().GetRunWorkflowTx(mock.Anything, activeWorkflows[1].VaultAddress, big.NewInt(2)).
 						Return(wfSimulatedTx2, nil)
 					m.EXPECT().GetSucceededWorkflows(mock.Anything).Return([]models.Workflow{activeWorkflows[0]}, nil)
 					return m
 				},
 				client: func(t *testing.T) *mocks.EthereumClient {
 					m := mocks.NewEthereumClient(t)
-					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
-					m.EXPECT().SimulateTransaction(ctx, mock.Anything, mock.Anything).Return(result, nil)
+					m.EXPECT().BlockByHash(mock.Anything, blockHash).Return(block, nil)
+					m.EXPECT().SimulateTransaction(mock.Anything, mock.Anything, mock.Anything).Return(result, nil)
 					m.EXPECT().TransactionReceipt(mock.Anything, mock.Anything).Return(types.NewReceipt([]byte{}, false, 1337), nil)
 					return m
 				},
@@ -87,12 +87,12 @@ func TestExecutor_Handle(t *testing.T) {
 			fields: fields{
 				entryPoint: func(t *testing.T) *mocks.DittoEntryPoint {
 					m := mocks.NewDittoEntryPoint(t)
-					m.EXPECT().IsExecutor(ctx).Return(false, nil)
+					m.EXPECT().IsExecutor(mock.Anything).Return(false, nil)
 					return m
 				},
 				client: func(t *testing.T) *mocks.EthereumClient {
 					m := mocks.NewEthereumClient(t)
-					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
+					m.EXPECT().BlockByHash(mock.Anything, blockHash).Return(block, nil)
 					return m
 				},
 			},
@@ -104,13 +104,13 @@ func TestExecutor_Handle(t *testing.T) {
 			fields: fields{
 				entryPoint: func(t *testing.T) *mocks.DittoEntryPoint {
 					m := mocks.NewDittoEntryPoint(t)
-					m.EXPECT().IsExecutor(ctx).Return(true, nil)
-					m.EXPECT().IsValidExecutor(ctx, blockNum).Return(false, nil)
+					m.EXPECT().IsExecutor(mock.Anything).Return(true, nil)
+					m.EXPECT().IsValidExecutor(mock.Anything, blockNum).Return(false, nil)
 					return m
 				},
 				client: func(t *testing.T) *mocks.EthereumClient {
 					m := mocks.NewEthereumClient(t)
-					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
+					m.EXPECT().BlockByHash(mock.Anything, blockHash).Return(block, nil)
 					return m
 				},
 			},
@@ -121,14 +121,14 @@ func TestExecutor_Handle(t *testing.T) {
 			fields: fields{
 				entryPoint: func(t *testing.T) *mocks.DittoEntryPoint {
 					m := mocks.NewDittoEntryPoint(t)
-					m.EXPECT().IsExecutor(ctx).Return(true, nil)
-					m.EXPECT().IsValidExecutor(ctx, blockNum).Return(true, nil)
-					m.EXPECT().IsValidExecutor(ctx, futureBlockNum).Return(false, nil)
+					m.EXPECT().IsExecutor(mock.Anything).Return(true, nil)
+					m.EXPECT().IsValidExecutor(mock.Anything, blockNum).Return(true, nil)
+					m.EXPECT().IsValidExecutor(mock.Anything, futureBlockNum).Return(false, nil)
 					return m
 				},
 				client: func(t *testing.T) *mocks.EthereumClient {
 					m := mocks.NewEthereumClient(t)
-					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
+					m.EXPECT().BlockByHash(mock.Anything, blockHash).Return(block, nil)
 					return m
 				},
 			},
@@ -139,23 +139,23 @@ func TestExecutor_Handle(t *testing.T) {
 			fields: fields{
 				entryPoint: func(t *testing.T) *mocks.DittoEntryPoint {
 					m := mocks.NewDittoEntryPoint(t)
-					m.EXPECT().IsExecutor(ctx).Return(true, nil)
-					m.EXPECT().IsValidExecutor(ctx, blockNum).Return(true, nil)
-					m.EXPECT().IsValidExecutor(ctx, futureBlockNum).Return(true, nil)
-					m.EXPECT().GetAllActiveWorkflows(ctx).Return(activeWorkflows, nil)
-					m.EXPECT().RunMultipleWorkflows(ctx, activeWorkflows[:1], mock.Anything).Return(tx, nil)
-					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[0].VaultAddress, big.NewInt(1)).
+					m.EXPECT().IsExecutor(mock.Anything).Return(true, nil)
+					m.EXPECT().IsValidExecutor(mock.Anything, blockNum).Return(true, nil)
+					m.EXPECT().IsValidExecutor(mock.Anything, futureBlockNum).Return(true, nil)
+					m.EXPECT().GetAllActiveWorkflows(mock.Anything).Return(activeWorkflows, nil)
+					m.EXPECT().RunMultipleWorkflows(mock.Anything, activeWorkflows[:1], mock.Anything).Return(tx, nil)
+					m.EXPECT().GetRunWorkflowTx(mock.Anything, activeWorkflows[0].VaultAddress, big.NewInt(1)).
 						Return(wfSimulatedTx1, nil)
-					m.EXPECT().GetRunWorkflowTx(ctx, activeWorkflows[1].VaultAddress, big.NewInt(2)).
+					m.EXPECT().GetRunWorkflowTx(mock.Anything, activeWorkflows[1].VaultAddress, big.NewInt(2)).
 						Return(wfSimulatedTx2, nil)
 					m.EXPECT().GetSucceededWorkflows(mock.Anything).Return([]models.Workflow{activeWorkflows[0]}, nil)
 					return m
 				},
 				client: func(t *testing.T) *mocks.EthereumClient {
 					m := mocks.NewEthereumClient(t)
-					m.EXPECT().BlockByHash(ctx, blockHash).Return(block, nil)
-					m.EXPECT().SimulateTransaction(ctx, wfSimulatedTx1, blockNum).Return(result, nil)
-					m.EXPECT().SimulateTransaction(ctx, wfSimulatedTx2, blockNum).Return("0x0", nil)
+					m.EXPECT().BlockByHash(mock.Anything, blockHash).Return(block, nil)
+					m.EXPECT().SimulateTransaction(mock.Anything, wfSimulatedTx1, blockNum).Return(result, nil)
+					m.EXPECT().SimulateTransaction(mock.Anything, wfSimulatedTx2, blockNum).Return("0x0", nil)
 					m.EXPECT().TransactionReceipt(mock.Anything, mock.Anything).Return(types.NewReceipt([]byte{}, false, 1337), nil)
 					return m
 				},
@@ -166,8 +166,8 @@ func TestExecutor_Handle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := executor.NewExecutor(tt.fields.client(t), tt.fields.entryPoint(t), ignoreEndBlocks)
-			if err := r.Handle(ctx, blockHash); (err != nil) != tt.wantErr {
+			r := executor.NewExecutor(tt.fields.client(t), tt.fields.entryPoint(t), ignoreEndBlocks, 5*time.Second)
+			if err := r.Handle(context.Background(), blockHash); (err != nil) != tt.wantErr {
 				assert.Equal(t, tt.expectedErr, err)
 			}
 		})

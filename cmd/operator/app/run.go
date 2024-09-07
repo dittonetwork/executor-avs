@@ -18,10 +18,11 @@ import (
 )
 
 const (
-	appName                = "AVS-operator"
-	version                = "1.0.0"
-	defaultShutdownTimeout = 30 * time.Second
-	devaultIgnoreEndBlocks = 3
+	appName                  = "AVS-operator"
+	version                  = "1.0.0"
+	defaultShutdownTimeout   = 30 * time.Second
+	defaultSimulationTimeout = 5 * time.Second
+	devaultIgnoreEndBlocks   = 3
 )
 
 var (
@@ -29,6 +30,7 @@ var (
 	shutdownTimeout            time.Duration
 	autoDeactivate             bool
 	ignoreEndBlocks            uint
+	simulationTimeout          time.Duration
 )
 
 func initRunFlags(cmd *cobra.Command) {
@@ -37,8 +39,19 @@ func initRunFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&addr, "addr", ":8080", "Operator addr")
 	cmd.Flags().StringVar(&diagnosticsAddr, "diagnostics-addr", ":7070", "Operator diagnostics addr")
 	cmd.Flags().DurationVar(&shutdownTimeout, "shutdown-timeout", defaultShutdownTimeout, "Graceful shutdown timeout")
-	cmd.Flags().BoolVar(&autoDeactivate, "auto-deactivate", true, "Do not deactivate the operator on shutdown")
-	cmd.Flags().UintVar(&ignoreEndBlocks, "ignore-end-block", devaultIgnoreEndBlocks, "Graceful shutdown timeout")
+	cmd.Flags().DurationVar(
+		&simulationTimeout,
+		"simulation-timeout",
+		defaultSimulationTimeout,
+		"RPC simulation execution timeout",
+	)
+	cmd.Flags().BoolVar(&autoDeactivate, "auto-deactivate", true, "Deactivate the operator on shutdown")
+	cmd.Flags().UintVar(
+		&ignoreEndBlocks,
+		"ignore-end-block",
+		devaultIgnoreEndBlocks,
+		"Block amount to ignore execution at the end of epoch",
+	)
 }
 
 func Run(cfg *Config) (*sync.WaitGroup, error) {
@@ -55,6 +68,7 @@ func Run(cfg *Config) (*sync.WaitGroup, error) {
 
 	// adapters
 	ethClient, err := ethereum.NewClient(conn, cfg.ContractAddress, cfg.ExecutorPrivateKey)
+	// we keep this client opened until the end, it closes implicitly
 	if err != nil {
 		return nil, err
 	}
@@ -63,19 +77,20 @@ func Run(cfg *Config) (*sync.WaitGroup, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// services
-	// TODO: refactor WithMetrics passing
 	executorService := executor.NewService(
 		executor.NewExecutor(
 			ethClient,
 			entryPoint,
 			big.NewInt(int64(ignoreEndBlocks)),
+			simulationTimeout,
 			executor.WithMetrics(),
 			executor.WithCustomLiveCycle(autoDeactivate),
 		),
 	)
 
-	return service.RunWait(
+	wg := service.RunWait(
 		executorService,
 		rest.NewServer(addr, shutdownTimeout,
 			endpoint.NewHealthCheckEndpoint(),
@@ -83,5 +98,7 @@ func Run(cfg *Config) (*sync.WaitGroup, error) {
 			endpoint.NewServicesEndpoint(),
 			endpoint.NewServiceHealthEndpoint(),
 		),
-	), nil
+	)
+
+	return wg, nil
 }

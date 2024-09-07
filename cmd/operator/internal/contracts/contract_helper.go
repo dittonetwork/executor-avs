@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -19,11 +18,7 @@ type ContractHelper struct {
 	KeyedTransactor *bind.TransactOpts
 }
 
-func NewContractHelper(ethClientURL string, privateKey string) (*ContractHelper, error) {
-	const dialTimeoutSecs = 5
-	ctx, cancel := context.WithTimeout(context.Background(), dialTimeoutSecs*time.Second)
-	defer cancel()
-
+func NewContractHelper(ctx context.Context, ethClientURL string, privateKey string) (*ContractHelper, error) {
 	ethClient, err := ethclient.DialContext(ctx, ethClientURL)
 	if err != nil {
 		return nil, fmt.Errorf("connection to RPC node: %w", err)
@@ -35,7 +30,7 @@ func NewContractHelper(ethClientURL string, privateKey string) (*ContractHelper,
 		return nil, fmt.Errorf("private key hex to ECDSA: %w", err)
 	}
 
-	chainID, err := ethClient.NetworkID(context.Background())
+	chainID, err := ethClient.NetworkID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get network id: %w", err)
 	}
