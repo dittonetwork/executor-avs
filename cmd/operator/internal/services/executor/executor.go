@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
-	portdep "github.com/dittonetwork/executor-avs/cmd/operator/internal/ports/dep"
-
+	"github.com/dittonetwork/executor-avs/cmd/operator/internal/adapters/dittoentrypoint"
 	"github.com/dittonetwork/executor-avs/cmd/operator/internal/models"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 	"github.com/dittonetwork/executor-avs/pkg/primitives"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -24,51 +24,47 @@ var (
 	ErrUnregisteredExecutor = errors.New("executor is not registered")
 )
 
-//go:generate mockery --name ethereumClient --output ./mocks --outpkg mocks
-type ethereumClient interface {
-	SubscribeNewHead(ctx context.Context) (chan *types.Header, ethereum.Subscription, error)
+//go:generate mockery --name Executor --output ./mocks --outpkg mocks
+type Executor interface {
+	LongPollingLoop(ctx context.Context) error
+	IsAutoDeactivate() bool
+	ProcessBlock(ctx context.Context, blockHash common.Hash) error
+	Activate(ctx context.Context) error
+	Deactivate(ctx context.Context) error
+}
+
+//go:generate mockery --name EthClient --output ./mocks --outpkg mocks
+type EthClient interface {
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
-	SimulateTransaction(ctx context.Context, tx *types.Transaction, blockNum *big.Int) (string, error)
-	SendTransaction(ctx context.Context, tx *types.Transaction) error
-	GetBalance(ctx context.Context) (*big.Int, error)
+	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
 	CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error)
 }
 
-//go:generate mockery --name dittoEntryPoint --output ./mocks --outpkg mocks
-type dittoEntryPoint interface {
-	GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error)
-	IsExecutor(ctx context.Context) (bool, error)
-	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
-	GetRunWorkflowTx(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (*types.Transaction, error)
-	RunMultipleWorkflows(ctx context.Context,
-		workflows []models.Workflow, estimatedGasMultiplier float64) (*types.Transaction, error)
-	DeactivateExecutor(ctx context.Context) (*types.Transaction, error)
-	ActivateExecutor(ctx context.Context) (*types.Transaction, error)
-	GetSucceededWorkflows(logs []*types.Log) ([]models.Workflow, error)
+type Impl struct {
+	Client     EthClient
+	EntryPoint dittoentrypoint.DittoEntryPoint
+
+	metrics              *Metrics
+	workflowsCache       *WorkflowsCache
+	autoDeactivate       bool
+	ignoreEndBlocks      *big.Int
+	blockHandlingTimeout time.Duration
+	longPollInterval     time.Duration
 }
 
-type Executor struct {
-	Client     ethereumClient
-	EntryPoint dittoEntryPoint
+var _ Executor = new(Impl)
 
-	metrics           *Metrics
-	workflowsCache    *WorkflowsCache
-	autoDeactivate    bool
-	ignoreEndBlocks   *big.Int
-	simulationTimeout time.Duration
-}
-
-type Options func(*Executor)
+type Options func(*Impl)
 
 func WithMetrics() Options {
-	return func(e *Executor) {
+	return func(e *Impl) {
 		e.metrics.Register()
 	}
 }
 
 func WithCustomLiveCycle(autoDeactivate bool) Options {
-	return func(e *Executor) {
+	return func(e *Impl) {
 		e.autoDeactivate = autoDeactivate
 	}
 }
@@ -128,19 +124,21 @@ func (wc *WorkflowsCache) ReleaseWorkflowsLock(workflows []models.Workflow) {
 }
 
 func NewExecutor(
-	client ethereumClient,
-	entryPoint dittoEntryPoint,
+	client EthClient,
+	entryPoint dittoentrypoint.DittoEntryPoint,
 	ignoreEndBlocks *big.Int,
-	simulationTimeout time.Duration,
+	blockHandlingTimeout time.Duration,
+	longPollInterval time.Duration,
 	opts ...Options,
-) *Executor {
-	e := &Executor{
-		Client:            client,
-		EntryPoint:        entryPoint,
-		metrics:           NewMetrics(),
-		workflowsCache:    NewWorkflowsCache(),
-		ignoreEndBlocks:   ignoreEndBlocks,
-		simulationTimeout: simulationTimeout,
+) *Impl {
+	e := &Impl{
+		Client:               client,
+		EntryPoint:           entryPoint,
+		metrics:              NewMetrics(),
+		workflowsCache:       NewWorkflowsCache(),
+		ignoreEndBlocks:      ignoreEndBlocks,
+		blockHandlingTimeout: blockHandlingTimeout,
+		longPollInterval:     longPollInterval,
 	}
 
 	for _, opt := range opts {
@@ -150,25 +148,75 @@ func NewExecutor(
 	return e
 }
 
-func (r *Executor) IsAutoDeactivate() bool {
+func (r *Impl) LongPollingLoop(ctx context.Context) error {
+	// Since we use long polling, the same block will be read multiple times between tick. Keep blocks
+	// currently being processed in cache.
+	const cacheSize = 128
+	cache, cacheErr := lru.New[common.Hash, bool](cacheSize)
+	if cacheErr != nil {
+		return cacheErr
+	}
+
+	var wg sync.WaitGroup
+	ticker := time.NewTicker(r.longPollInterval)
+	defer ticker.Stop()
+
+	func() {
+		for {
+			select {
+			case <-ticker.C:
+				processingCtx, cancel := context.WithTimeout(ctx, r.blockHandlingTimeout)
+				defer cancel()
+
+				header, err := r.Client.HeaderByNumber(processingCtx, nil)
+				if err != nil {
+					log.With(log.Err(err)).Error("getting last header")
+					continue
+				}
+
+				_, ok := cache.Get(header.Hash())
+				if ok {
+					log.Debug("block already in processing cache, skipping")
+					continue
+				}
+
+				cache.Add(header.Hash(), true)
+				wg.Add(1)
+				go func(b *types.Header) {
+					defer wg.Done()
+					if err = r.ProcessBlock(processingCtx, b.Hash()); err != nil {
+						log.With(log.Err(err)).Error("processing block")
+						cache.Remove(b.Hash())
+					}
+				}(header)
+
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	wg.Wait()
+	return nil
+}
+
+func (r *Impl) IsAutoDeactivate() bool {
 	return r.autoDeactivate
 }
 
-func (r *Executor) SubscribeToNewBlocks(ctx context.Context) (chan *types.Header, ethereum.Subscription, error) {
-	return r.Client.SubscribeNewHead(ctx)
-}
+func (r *Impl) ProcessBlock(ctx context.Context, blockHash common.Hash) error {
+	processingTimer := prometheus.NewTimer(r.metrics.blockProcessingDurationSeconds)
+	defer processingTimer.ObserveDuration()
 
-func (r *Executor) Handle(ctx context.Context, blockHash common.Hash) error {
-	if err := r.handle(ctx, blockHash); err != nil {
+	if err := r.processBlock(ctx, blockHash); err != nil {
 		r.metrics.errorsTotal.Add(1)
-
 		return err
 	}
 
 	return nil
 }
 
-func (r *Executor) Activate(ctx context.Context) error {
+func (r *Impl) Activate(ctx context.Context) error {
 	if isExecutor, err := r.EntryPoint.IsExecutor(ctx); err != nil {
 		return fmt.Errorf("check if is executor: %w", err)
 	} else if isExecutor {
@@ -188,7 +236,7 @@ func (r *Executor) Activate(ctx context.Context) error {
 	return nil
 }
 
-func (r *Executor) Deactivate(ctx context.Context) error {
+func (r *Impl) Deactivate(ctx context.Context) error {
 	tx, err := r.EntryPoint.DeactivateExecutor(ctx)
 	if err != nil {
 		return fmt.Errorf("deactivate executor: %w", err)
@@ -201,7 +249,7 @@ func (r *Executor) Deactivate(ctx context.Context) error {
 	return nil
 }
 
-func (r *Executor) waitForTransaction(ctx context.Context, tx *types.Transaction) {
+func (r *Impl) waitForTransaction(ctx context.Context, tx *types.Transaction) {
 	const pollIntervalSecs = 5
 
 	log.Info("Waiting for transaction to complete...")
@@ -221,7 +269,7 @@ func (r *Executor) waitForTransaction(ctx context.Context, tx *types.Transaction
 	}
 }
 
-func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
+func (r *Impl) processBlock(ctx context.Context, blockHash common.Hash) error {
 	block, err := r.Client.BlockByHash(ctx, blockHash)
 	if err != nil {
 		return fmt.Errorf("get block by hash: %w", err)
@@ -231,7 +279,10 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 		return ErrBlockIsNil
 	}
 
-	log.With(log.Int64("block_number", block.Number().Int64())).Info("processing block")
+	log.With(
+		log.Int64("block_number", block.Number().Int64()),
+		log.String("block_hash", blockHash.Hex()),
+	).Info("processing block")
 
 	isExecutor, err := r.EntryPoint.IsExecutor(ctx)
 	if err != nil {
@@ -265,7 +316,7 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 		return nil
 	}
 
-	executableWorkflows, err := r.getExecutableWorkflows(ctx, block.Number())
+	executableWorkflows, err := r.getExecutableWorkflows(ctx)
 	if err != nil {
 		return fmt.Errorf("get executable workflows: %w", err)
 	}
@@ -302,104 +353,122 @@ func (r *Executor) handle(ctx context.Context, blockHash common.Hash) error {
 	return nil
 }
 
-func (r *Executor) getExecutableWorkflows(ctx context.Context, blockNum *big.Int) ([]models.Workflow, error) {
-	workflows, err := r.EntryPoint.GetAllActiveWorkflows(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get all active workflows: %w", err)
+func (r *Impl) getExecutableWorkflows(ctx context.Context) ([]models.Workflow, error) {
+	workflows, getWorkflowsError := r.EntryPoint.GetAllActiveWorkflows(ctx)
+	if getWorkflowsError != nil {
+		return nil, getWorkflowsError
 	}
 
-	var wg sync.WaitGroup
-	errCh := make(chan error, len(workflows))
-	wg.Add(len(workflows))
+	const batchSize = 150 // block gas limit / aprox wf cost = 30.000.000 / 200.000 = 150
+	var successfulWorkflows []models.Workflow
 
-	for i := range workflows {
-		workflow := &workflows[i]
+	for i := 0; i < len(workflows); i += batchSize {
+		end := i + batchSize
+		if end > len(workflows) {
+			end = len(workflows)
+		}
+		batch := workflows[i:end]
+
+		executableBatch, err := r.findExecutableBatch(ctx, batch)
+		if err != nil {
+			return nil, err
+		}
+
+		successfulWorkflows = append(successfulWorkflows, executableBatch...)
+	}
+
+	// Mb after merging into a single batch transactions will fail. Final check.
+	executionResults, err := r.EntryPoint.SimulateMutlipleWorkflows(ctx, successfulWorkflows)
+	if err != nil {
+		return nil, err
+	}
+
+	successfulWorkflows = successfulWorkflows[:0]
+	for i, result := range executionResults {
+		if result {
+			successfulWorkflows = append(successfulWorkflows, workflows[i])
+		}
+	}
+
+	for _, workflow := range successfulWorkflows {
 		log.With(
 			log.String("vault_addr", workflow.VaultAddress.String()),
 			log.String("workflow_id", workflow.WorkflowID.String()),
-		).Debug("active workflow")
-
-		go func(workflow *models.Workflow) {
-			defer wg.Done()
-			timeoutCtx, cancel := context.WithTimeout(ctx, r.simulationTimeout)
-			defer cancel()
-
-			var canRun bool
-			canRun, err = r.simulate(timeoutCtx, *workflow, blockNum)
-			if err != nil {
-				errCh <- fmt.Errorf("simulate workflow %d: %w", workflow.WorkflowID.Int64(), err)
-				return
-			}
-			log.With(
-				log.String("vault_addr", workflow.VaultAddress.Hex()),
-				log.String("workflow_id", workflow.WorkflowID.String()),
-				log.Bool("result", canRun),
-			).Debug("simulation done")
-			workflow.CouldBeExecuted = canRun
-		}(workflow)
+		).Debug("succeeded workflow")
 	}
 
-	wg.Wait()
-	close(errCh)
-
-	for err := range errCh {
-		if err != nil {
-			log.With(log.Err(err)).Error("simulate workflow error")
-		}
-	}
-
-	var executableWorkflows []models.Workflow
-	for _, workflow := range workflows {
-		if workflow.CouldBeExecuted {
-			executableWorkflows = append(executableWorkflows, workflow)
-		}
-	}
-
-	return executableWorkflows, nil
+	return successfulWorkflows, nil
 }
 
-func (r *Executor) simulate(ctx context.Context, workflow models.Workflow, blockNum *big.Int) (bool, error) {
-	tx, err := r.EntryPoint.GetRunWorkflowTx(ctx, workflow.VaultAddress, workflow.WorkflowID)
+func (r *Impl) findExecutableBatch(ctx context.Context, batch []models.Workflow) ([]models.Workflow, error) {
+	executionResults, simulationError := r.EntryPoint.SimulateMutlipleWorkflows(ctx, batch)
+	if simulationError != nil {
+		return r.handleSimulationError(ctx, batch, simulationError)
+	}
+
+	return r.filterExecutableBatch(batch, executionResults), nil
+}
+
+func (r *Impl) handleSimulationError(
+	ctx context.Context,
+	batch []models.Workflow,
+	simulationError error,
+) ([]models.Workflow, error) {
+	log.With(log.Err(simulationError)).Debug("error during batch simulation")
+
+	if !isGasLimitError(simulationError) {
+		return nil, simulationError
+	}
+
+	if len(batch) == 1 {
+		return nil, nil // Skip if we can't execute even a single workflow
+	}
+
+	return r.splitAndRecurseBatch(ctx, batch)
+}
+
+func (r *Impl) splitAndRecurseBatch(ctx context.Context, batch []models.Workflow) ([]models.Workflow, error) {
+	const divisorForMidpoint = 2
+	mid := len(batch) / divisorForMidpoint
+
+	left, err := r.findExecutableBatch(ctx, batch[:mid])
 	if err != nil {
-		if errors.Is(err, portdep.ErrExecutionReverted) {
-			return false, nil
+		return nil, err
+	}
+
+	right, err := r.findExecutableBatch(ctx, batch[mid:])
+	if err != nil {
+		return nil, err
+	}
+
+	return append(left, right...), nil
+}
+
+func (r *Impl) filterExecutableBatch(batch []models.Workflow, executionResults []bool) []models.Workflow {
+	var executableBatch []models.Workflow
+	for i, result := range executionResults {
+		if result {
+			executableBatch = append(executableBatch, batch[i])
 		}
-
-		return false, fmt.Errorf("run workflow: %w", err)
 	}
-
-	var resp string
-	resp, err = r.Client.SimulateTransaction(ctx, tx, blockNum)
-	if err != nil {
-		return false, fmt.Errorf("simulate transaction: %w", err)
-	}
-
-	isSuccess, err := hexStringToBool(resp)
-	if err != nil {
-		return false, fmt.Errorf("interpreting result: %w", err)
-	}
-
-	return isSuccess, nil
+	return executableBatch
 }
 
-func hexStringToBool(hexStr string) (bool, error) {
-	value := new(big.Int)
-	_, isSuccess := value.SetString(hexStr, 0)
-
-	if !isSuccess {
-		return false, fmt.Errorf("invalid hex format: %s", hexStr)
-	}
-
-	return value.Cmp(big.NewInt(0)) != 0, nil
+func isGasLimitError(_ error) bool {
+	// manually created huge batch, error was: "invalid character 'c' looking for beginning of value",
+	// since wss RPC returns "content length too large (6291774>5242880)".
+	// TODO: figure out which error is actually thrown in case of gas limit
+	//   (mb it is not rised during simulation calls at all)
+	return false
 }
 
-func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Workflow) ([]models.Workflow, error) {
+func (r *Impl) executeWorkflows(ctx context.Context, workflows []models.Workflow) ([]models.Workflow, error) {
 	gasLimitMultiplier := 1.5
 	tx, err := r.EntryPoint.RunMultipleWorkflows(ctx, workflows, gasLimitMultiplier)
-	txInMempoolTS := time.Now()
 	if err != nil {
 		return nil, fmt.Errorf("run multiple workflows: %w", err)
 	}
+	miningTimer := prometheus.NewTimer(r.metrics.miningLatencySeconds)
 
 	log.With(
 		log.String("tx_hash", tx.Hash().String()),
@@ -410,16 +479,15 @@ func (r *Executor) executeWorkflows(ctx context.Context, workflows []models.Work
 
 	spentAmount := new(big.Int).Mul(new(big.Int).SetUint64(tx.Gas()), tx.GasPrice())
 
-	r.metrics.nativeTokenSpentAmount.Add(primitives.WeiToETH(spentAmount))
+	r.metrics.nativeTokenSpentAmountTotal.Add(primitives.WeiToETH(spentAmount))
 
 	log.With(log.String("tx_hash", tx.Hash().String())).Debug("waiting for transaction to appear on chain")
 	receipt, err := bind.WaitMined(ctx, r.Client, tx)
 	if err != nil {
 		return nil, fmt.Errorf("waiting for RunMultipleWorkflows tx: %w", err)
 	}
+	miningTimer.ObserveDuration()
 	log.With(log.String("tx_hash", tx.Hash().String())).Debug("transaction is on chain")
-
-	r.metrics.miningLatency.Add(float64(time.Since(txInMempoolTS).Milliseconds()))
 
 	if receipt.Status == types.ReceiptStatusFailed {
 		return nil, fmt.Errorf("RunMultipleWorkflows failed on chain, status: %d", receipt.Status)

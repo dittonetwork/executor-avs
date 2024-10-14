@@ -1,7 +1,5 @@
 FROM golang:1.22 as builder
 
-ARG APP
-
 WORKDIR /app
 COPY go.mod .
 COPY go.sum .
@@ -9,14 +7,10 @@ RUN go mod download
 
 COPY . .
 
-RUN make go-build-$APP BUILD_MODE=release
+RUN make build BUILD_MODE=release
 
 FROM alpine:latest
 
-ARG APP
+COPY --from=builder /app/bin/operator /bin/operator
 
-RUN apk add --no-cache tzdata && apk --no-cache add ca-certificates
-
-COPY --from=builder /app/bin/$APP /bin/app
-
-ENTRYPOINT ["/bin/app"]
+ENTRYPOINT ["/bin/operator"]

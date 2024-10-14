@@ -7,8 +7,6 @@ import (
 	"math/big"
 	"strings"
 
-	portdep "github.com/dittonetwork/executor-avs/cmd/operator/internal/ports/dep"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -20,14 +18,42 @@ import (
 	"github.com/dittonetwork/executor-avs/pkg/log"
 )
 
-type DittoEntryPoint struct {
+//go:generate mockery --name DittoEntryPoint --output ./mocks --outpkg mocks
+type DittoEntryPoint interface {
+	ActivateExecutor(ctx context.Context) (*types.Transaction, error)
+	DeactivateExecutor(ctx context.Context) (*types.Transaction, error)
+	SetDelegatedSigner(ctx context.Context, signerAddress string) (*types.Transaction, error)
+	IsExecutor(ctx context.Context) (bool, error)
+	IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error)
+	GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error)
+	SimulateMutlipleWorkflows(ctx context.Context, workflows []models.Workflow) ([]bool, error)
+	RunMultipleWorkflows(
+		ctx context.Context,
+		workflows []models.Workflow,
+		estimatedGasMultiplier float64,
+	) (*types.Transaction, error)
+	ArrangeExecutors(ctx context.Context) (*types.Transaction, error)
+	GetAmountExecutors(ctx context.Context) (*big.Int, error)
+	CalculateOperatorAVSRegistrationDigestHash(
+		ctx context.Context,
+		address common.Address,
+		salt [32]byte,
+		expiry *big.Int,
+	) ([32]byte, error)
+	GetSucceededWorkflows(logs []*types.Log) ([]models.Workflow, error)
+	// makeTransacOpts(ctx context.Context) (*bind.TransactOpts, error)
+}
+
+type Impl struct {
 	client       *ethclient.Client
 	dep          *dittoentrypoint.Dittoentrypoint
 	privateKey   *ecdsa.PrivateKey
 	contractAddr common.Address
 }
 
-func New(ethClient *ethclient.Client, contractAddress, privateKey string) (*DittoEntryPoint, error) {
+var _ DittoEntryPoint = new(Impl)
+
+func New(ethClient *ethclient.Client, contractAddress, privateKey string) (*Impl, error) {
 	dep, err := dittoentrypoint.NewDittoentrypoint(common.HexToAddress(contractAddress), ethClient)
 	if err != nil {
 		return nil, fmt.Errorf("new ditto entry point: %w", err)
@@ -39,7 +65,7 @@ func New(ethClient *ethclient.Client, contractAddress, privateKey string) (*Ditt
 		return nil, fmt.Errorf("private key hex to ECDSA: %w", err)
 	}
 
-	return &DittoEntryPoint{
+	return &Impl{
 		client:       ethClient,
 		dep:          dep,
 		privateKey:   privateKeyECDSA,
@@ -47,7 +73,7 @@ func New(ethClient *ethclient.Client, contractAddress, privateKey string) (*Ditt
 	}, nil
 }
 
-func (d *DittoEntryPoint) ActivateExecutor(ctx context.Context) (*types.Transaction, error) {
+func (d *Impl) ActivateExecutor(ctx context.Context) (*types.Transaction, error) {
 	opts, err := d.makeTransacOpts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("make transac opts: %w", err)
@@ -63,7 +89,7 @@ func (d *DittoEntryPoint) ActivateExecutor(ctx context.Context) (*types.Transact
 	return tx, nil
 }
 
-func (d *DittoEntryPoint) DeactivateExecutor(ctx context.Context) (*types.Transaction, error) {
+func (d *Impl) DeactivateExecutor(ctx context.Context) (*types.Transaction, error) {
 	opts, err := d.makeTransacOpts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("make transac opts: %w", err)
@@ -79,7 +105,7 @@ func (d *DittoEntryPoint) DeactivateExecutor(ctx context.Context) (*types.Transa
 	return tx, nil
 }
 
-func (d *DittoEntryPoint) SetDelegatedSigner(ctx context.Context, signerAddress string) (*types.Transaction, error) {
+func (d *Impl) SetDelegatedSigner(ctx context.Context, signerAddress string) (*types.Transaction, error) {
 	opts, err := d.makeTransacOpts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("make transac opts: %w", err)
@@ -95,7 +121,7 @@ func (d *DittoEntryPoint) SetDelegatedSigner(ctx context.Context, signerAddress 
 	return tx, nil
 }
 
-func (d *DittoEntryPoint) IsExecutor(ctx context.Context) (bool, error) {
+func (d *Impl) IsExecutor(ctx context.Context) (bool, error) {
 	address := crypto.PubkeyToAddress(d.privateKey.PublicKey)
 
 	opts := &bind.CallOpts{
@@ -111,7 +137,7 @@ func (d *DittoEntryPoint) IsExecutor(ctx context.Context) (bool, error) {
 	return isExecutor, nil
 }
 
-func (d *DittoEntryPoint) IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error) {
+func (d *Impl) IsValidExecutor(ctx context.Context, blockNumber *big.Int) (bool, error) {
 	address := crypto.PubkeyToAddress(d.privateKey.PublicKey)
 
 	opts := &bind.CallOpts{
@@ -127,7 +153,7 @@ func (d *DittoEntryPoint) IsValidExecutor(ctx context.Context, blockNumber *big.
 	return isValidExecutor, nil
 }
 
-func (d *DittoEntryPoint) GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error) {
+func (d *Impl) GetAllActiveWorkflows(ctx context.Context) ([]models.Workflow, error) {
 	workflows, err := d.dep.GetAllActiveWorkflows(&bind.CallOpts{
 		Context: ctx,
 	})
@@ -146,35 +172,43 @@ func (d *DittoEntryPoint) GetAllActiveWorkflows(ctx context.Context) ([]models.W
 	return result, nil
 }
 
-func (d *DittoEntryPoint) GetRunWorkflowTx(ctx context.Context, vaultAddr common.Address, workflowID *big.Int) (
-	*types.Transaction, error,
-) {
-	// TODO: figure out what is StorageTransactor
-	// https://geth.ethereum.org/docs/developers/dapp-developer/native-bindings)
-	// and do we need it (auth.Signer, auth.From)
-	dummySigner := func(_ common.Address, tx *types.Transaction) (*types.Transaction, error) {
-		return tx, nil
+func (d *Impl) SimulateMutlipleWorkflows(
+	ctx context.Context,
+	workflows []models.Workflow,
+) ([]bool, error) {
+	wfs := make([]dittoentrypoint.IDittoEntryPointWorkflow, 0, len(workflows))
+
+	for _, workflow := range workflows {
+		wfs = append(wfs, dittoentrypoint.IDittoEntryPointWorkflow{
+			VaultAddress: workflow.VaultAddress,
+			WorkflowId:   workflow.WorkflowID,
+		})
 	}
-	tx, err := d.dep.RunWorkflowWithRevert(&bind.TransactOpts{
-		Context: ctx,
-		NoSend:  true,
-		From:    crypto.PubkeyToAddress(d.privateKey.PublicKey),
-		// GasTipCap: big.NewInt(0), // To prevent it from calling eth_maxPriorityFeePerGas
-		// GasLimit:  1,             // To prevent it from calling eth_estimateGas
-		Signer: dummySigner, // No need to sign for simulation
-	}, vaultAddr, workflowID)
+
+	var result []interface{}
+	raw := dittoentrypoint.DittoentrypointCallerRaw{Contract: &d.dep.DittoentrypointCaller}
+	err := raw.Call(
+		&bind.CallOpts{
+			// Pending: false // Whether to operate on the pending state or the last known one
+			From:    crypto.PubkeyToAddress(d.privateKey.PublicKey),
+			Context: ctx,
+		},
+		&result,
+		"runMultipleWorkflows",
+		wfs,
+	)
 	if err != nil {
-		if err.Error() == "execution reverted" {
-			return nil, portdep.ErrExecutionReverted
-		}
-
-		return nil, fmt.Errorf("call runWorkflowWithRevert: %w", err)
+		return nil, err
+	}
+	convertedValue, ok := result[0].([]bool)
+	if !ok {
+		log.Fatal("Failed to cast result[0] to []bool")
 	}
 
-	return tx, nil
+	return convertedValue, nil
 }
 
-func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context,
+func (d *Impl) RunMultipleWorkflows(ctx context.Context,
 	workflows []models.Workflow, estimatedGasMultiplier float64) (
 	*types.Transaction, error,
 ) {
@@ -211,7 +245,7 @@ func (d *DittoEntryPoint) RunMultipleWorkflows(ctx context.Context,
 	return tx, nil
 }
 
-func (d *DittoEntryPoint) ArrangeExecutors(ctx context.Context) (*types.Transaction, error) {
+func (d *Impl) ArrangeExecutors(ctx context.Context) (*types.Transaction, error) {
 	opts, err := d.makeTransacOpts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("make transac opts: %w", err)
@@ -227,7 +261,7 @@ func (d *DittoEntryPoint) ArrangeExecutors(ctx context.Context) (*types.Transact
 	return tx, nil
 }
 
-func (d *DittoEntryPoint) GetAmountExecutors(ctx context.Context) (*big.Int, error) {
+func (d *Impl) GetAmountExecutors(ctx context.Context) (*big.Int, error) {
 	amount, err := d.dep.GetAmountExecutors(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return nil, fmt.Errorf("call arrange executors: %w", err)
@@ -236,7 +270,7 @@ func (d *DittoEntryPoint) GetAmountExecutors(ctx context.Context) (*big.Int, err
 	return amount, nil
 }
 
-func (d *DittoEntryPoint) CalculateOperatorAVSRegistrationDigestHash(
+func (d *Impl) CalculateOperatorAVSRegistrationDigestHash(
 	ctx context.Context,
 	address common.Address,
 	salt [32]byte,
@@ -253,7 +287,7 @@ func (d *DittoEntryPoint) CalculateOperatorAVSRegistrationDigestHash(
 	return stringToSign, nil
 }
 
-func (d *DittoEntryPoint) GetSucceededWorkflows(logs []*types.Log) ([]models.Workflow, error) {
+func (d *Impl) GetSucceededWorkflows(logs []*types.Log) ([]models.Workflow, error) {
 	succeededWorkflows := make([]models.Workflow, 0, len(logs))
 	for _, vLog := range logs {
 		event, err := d.dep.ParseDittoEntryPointWorkflowSuccess(*vLog)
@@ -274,7 +308,7 @@ func (d *DittoEntryPoint) GetSucceededWorkflows(logs []*types.Log) ([]models.Wor
 	return succeededWorkflows, nil
 }
 
-func (d *DittoEntryPoint) makeTransacOpts(ctx context.Context) (*bind.TransactOpts, error) {
+func (d *Impl) makeTransacOpts(ctx context.Context) (*bind.TransactOpts, error) {
 	chainID, err := d.client.NetworkID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get network id: %w", err)
