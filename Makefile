@@ -53,14 +53,17 @@ go-run-operator:
 .PHONY: build
 build: go-build-operator
 
+.PHONY: test
+test: unit-tests
+
 .PHONY: unit-tests
 unit-tests:
 	@echo "  >  Running unit tests"
 	go clean -testcache
-	go test -coverprofile=coverage -cover -v ./cmd... ./internal... ./pkg...
+	go test -coverprofile=coverage -cover -v ./cmd... ./pkg...
 
-.PHONY: unit-tests-coverage
-unit-tests-coverage: unit-tests
+.PHONY: coverage-tests
+coverage-tests:
 	go tool cover -html=coverage -o cover_out.html
 	open cover_out.html
 
@@ -85,5 +88,11 @@ go-lint:
 	@echo "  >  Running golint"
 	@golangci-lint run ./...
 
+.PHONY: abi-gen
 abi-gen:
 	go generate ./cmd/operator/internal/contracts
+
+.PHONY: mock-gen
+mock-gen:
+	go generate ./cmd/operator/internal/adapters/dittoentrypoint/...
+	go generate ./cmd/operator/internal/services/...

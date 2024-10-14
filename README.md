@@ -293,20 +293,23 @@ By default, executor exports Prometheus metrics at `:7070/metrics` (port could b
 Grafana + Prometheus setting, provided in [_prometheus-grafana_](prometheus-grafana) folder.
 Refer to the related [_README.md_](prometheus-grafana/README.md) file for more info.
 
-| Metric Name                       | Type    | Description                              |
-|-----------------------------------|---------|------------------------------------------|
-| `native_token_spent_amount`       | Gauge   | Total amount of native token spent       |
-| `native_token_current_balance`    | Gauge   | Current balance of native token          |
-| `executed_workflows_amount_total` | Counter | Total amount of executed workflows       |
-| `errors_total`                    | Counter | Total amount of operator internal errors |
+| Metric Name                         | Type      | Description                                              |
+|-------------------------------------|-----------|----------------------------------------------------------|
+| `executed_workflows_total`          | Counter   | Total number of executed workflows                       |
+| `sent_workflows_total`              | Counter   | Total number of workflows sent to the chain              |
+| `errors_total`                      | Counter   | Total number of internal operator errors                 |
+| `native_token_spent_total`          | Counter   | Total amount of native token spent                       |
+| `native_token_current_balance`      | Gauge     | Current balance of native token                          |
+| `mining_latency_seconds`            | Histogram | Latency in seconds between broadcast and block inclusion |
+| `block_processing_duration_seconds` | Histogram | Duration in seconds for processing a block               |
 
 ## Deployments
 
-### Holesky Testnet Deployments
+### Polygon Testnet Deployments
 
-| Name            | Proxy                                                                                                                           |
-|-----------------|---------------------------------------------------------------------------------------------------------------------------------|
-| DittoEntryPoint | [`0x5FD0026a449eeA51Bd1471E4ee8df8607aaECC24`](https://holesky.etherscan.io/address/0x5FD0026a449eeA51Bd1471E4ee8df8607aaECC24) |
+| Name            | Proxy                                                                                                                      |
+|-----------------|----------------------------------------------------------------------------------------------------------------------------|
+| DittoEntryPoint | [`0xAC25714dc88A615D2f22f638264A0df5a9EbD70b`](https://polygonscan.com/address/0xac25714dc88a615d2f22f638264a0df5a9ebd70b) |
 
 ## Developer guide
 

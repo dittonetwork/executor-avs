@@ -220,7 +220,7 @@ func initDittoEntryPoint(
 	nodeURL string,
 	contractAddr string,
 	privateKey string,
-) (*dittoentrypoint.DittoEntryPoint, error) {
+) (dittoentrypoint.DittoEntryPoint, error) {
 	conn, err := ethclient.Dial(nodeURL)
 	if err != nil {
 		return nil, fmt.Errorf("ethereum client dial: %w", err)
@@ -259,7 +259,7 @@ func waitForTransaction(ctx context.Context, cfg *Config, tx *types.Transaction)
 }
 
 func createRegistrationStructure(
-	dep *dittoentrypoint.DittoEntryPoint,
+	dep dittoentrypoint.DittoEntryPoint,
 	privateKeyECDSA *ecdsa.PrivateKey,
 ) (iservicemanager.ISignatureUtilsSignatureWithSaltAndExpiry, error) {
 	publicKey := privateKeyECDSA.Public()

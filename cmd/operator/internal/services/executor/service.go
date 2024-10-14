@@ -2,35 +2,21 @@ package executor
 
 import (
 	"context"
-	"sync"
-
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 
 	api "github.com/dittonetwork/executor-avs/api/operator"
 	"github.com/dittonetwork/executor-avs/pkg/log"
 	"github.com/dittonetwork/executor-avs/pkg/service"
 )
 
-//go:generate mockery --name executor --output ./mocks --outpkg mocks
-type executor interface {
-	SubscribeToNewBlocks(ctx context.Context) (chan *types.Header, ethereum.Subscription, error)
-	Handle(ctx context.Context, blockHash common.Hash) error
-	Deactivate(ctx context.Context) error
-	Activate(ctx context.Context) error
-	IsAutoDeactivate() bool
-}
-
 type Service struct {
-	executor executor
+	executor Executor
 
 	status api.ServiceStatusType
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
-func NewService(executorHandler executor) *Service {
+func NewService(executorHandler Executor) *Service {
 	return &Service{
 		executor: executorHandler,
 		status:   api.ServiceStatusTypeDown,
@@ -70,33 +56,12 @@ func (s *Service) run() {
 		}
 	}()
 
-	blocks, sub, err := s.executor.SubscribeToNewBlocks(s.ctx)
+	// could throw only if cache creation failed, not during execution
+	err := s.executor.LongPollingLoop(s.ctx)
 	if err != nil {
-		log.With(log.Err(err)).Fatal("subscribe to new blocks")
+		log.With(log.Err(err)).Error("error starting long poll lopo")
+		s.Stop()
 	}
-	defer sub.Unsubscribe()
-
-	var wg sync.WaitGroup
-	func() {
-		for {
-			select {
-			case err = <-sub.Err():
-				log.With(log.Err(err)).Fatal("subscription error")
-			case block := <-blocks:
-				wg.Add(1)
-				go func(b *types.Header) {
-					defer wg.Done()
-					if err = s.executor.Handle(s.ctx, b.Hash()); err != nil {
-						log.With(log.Err(err)).Error("handle block")
-					}
-				}(block)
-			case <-s.ctx.Done():
-				return
-			}
-		}
-	}()
-
-	wg.Wait()
 }
 
 func (s *Service) Stop() {

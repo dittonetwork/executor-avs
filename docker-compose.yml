@@ -1,0 +1,33 @@
+services:
+  ditto-operator:
+    build:
+      context: .
+    restart: on-failure
+    environment:
+      - EXECUTOR_PRIVATE_KEY=${EXECUTOR_PRIVATE_KEY}
+    command:
+      - run
+      - --node-url
+      - wss://capable-smart-aura.matic.quiknode.pro/01fbbf11ad23ca236a9e410f5a872fde1dbcd33c # your node URL
+      - --contract-addr
+      - 0xAC25714dc88A615D2f22f638264A0df5a9EbD70b # contract addr from docs
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - 3000:3000
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana

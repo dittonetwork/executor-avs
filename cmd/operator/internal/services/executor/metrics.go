@@ -9,39 +9,31 @@ const (
 )
 
 type Metrics struct {
-	nativeTokenSpentAmount       prometheus.Gauge
-	nativeTokenCurrentBalance    prometheus.Gauge
-	miningLatency                prometheus.Gauge
+	// Counters
+	nativeTokenSpentAmountTotal  prometheus.Counter
 	executedWorkflowsAmountTotal prometheus.Counter
 	sentWorkflowsAmountTotal     prometheus.Counter
 	errorsTotal                  prometheus.Counter
+
+	// Gauges
+	nativeTokenCurrentBalance prometheus.Gauge
+
+	// Histograms
+	miningLatencySeconds           prometheus.Histogram
+	blockProcessingDurationSeconds prometheus.Histogram
 }
 
 func NewMetrics() *Metrics {
 	return &Metrics{
-		nativeTokenSpentAmount: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "native_token_spent_amount",
-			Help:      "Total amount of native token spent",
-		}),
-		nativeTokenCurrentBalance: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "native_token_current_balance",
-			Help:      "Current balance of native token",
-		}),
-		miningLatency: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "settlement_latency",
-			Help:      "Milliseconds passed between broadcast and inclusion into block",
-		}),
+		// Counters
 		executedWorkflowsAmountTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: namespace,
-			Name:      "executed_workflows_amount_total",
+			Name:      "executed_workflows_total",
 			Help:      "Total amount of executed workflows",
 		}),
 		sentWorkflowsAmountTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: namespace,
-			Name:      "sent_workflows_amount_total",
+			Name:      "sent_workflows_total",
 			Help:      "Total amount of workflows sent to chain",
 		}),
 		errorsTotal: prometheus.NewCounter(prometheus.CounterOpts{
@@ -49,23 +41,63 @@ func NewMetrics() *Metrics {
 			Name:      "errors_total",
 			Help:      "Total amount of operator internal errors",
 		}),
+		nativeTokenSpentAmountTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "native_token_spent_total",
+			Help:      "Total amount of native token spent",
+		}),
+
+		// Gauges
+		nativeTokenCurrentBalance: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "native_token_current_balance",
+			Help:      "Current balance of native token",
+		}),
+
+		// Histograms
+		miningLatencySeconds: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Name:      "mining_latency_seconds",
+			Help:      "Latency in seconds between broadcast and inclusion into block",
+		}),
+		blockProcessingDurationSeconds: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Name:      "block_processing_duration_seconds",
+			Help:      "Duration in seconds for processing a block",
+		}),
 	}
 }
 
 // Describe implements prometheus.Collector interface.
 func (m *Metrics) Describe(descs chan<- *prometheus.Desc) {
-	m.nativeTokenSpentAmount.Describe(descs)
-	m.nativeTokenCurrentBalance.Describe(descs)
+	// Counters
+	m.nativeTokenSpentAmountTotal.Describe(descs)
 	m.executedWorkflowsAmountTotal.Describe(descs)
+	m.sentWorkflowsAmountTotal.Describe(descs)
 	m.errorsTotal.Describe(descs)
+
+	// Gauges
+	m.nativeTokenCurrentBalance.Describe(descs)
+
+	// Histograms
+	m.miningLatencySeconds.Describe(descs)
+	m.blockProcessingDurationSeconds.Describe(descs)
 }
 
 // Collect implements prometheus.Collector interface.
 func (m *Metrics) Collect(metrics chan<- prometheus.Metric) {
-	m.nativeTokenSpentAmount.Collect(metrics)
-	m.nativeTokenCurrentBalance.Collect(metrics)
+	// Counters
+	m.nativeTokenSpentAmountTotal.Collect(metrics)
 	m.executedWorkflowsAmountTotal.Collect(metrics)
+	m.sentWorkflowsAmountTotal.Collect(metrics)
 	m.errorsTotal.Collect(metrics)
+
+	// Gauges
+	m.nativeTokenCurrentBalance.Collect(metrics)
+
+	// Histograms
+	m.miningLatencySeconds.Collect(metrics)
+	m.blockProcessingDurationSeconds.Collect(metrics)
 }
 
 func (m *Metrics) Register() {
