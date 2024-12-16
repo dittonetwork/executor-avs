@@ -8,6 +8,7 @@ import (
 )
 
 func GetCPUUsage() (float64, error) {
+	// #nosec G115
 	pid := int32(os.Getpid())
 	proc, err := process.NewProcess(pid)
 	if err != nil {

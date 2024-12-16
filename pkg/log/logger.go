@@ -110,7 +110,11 @@ func NewContext(parent context.Context, fields ...Field) context.Context {
 	if val == nil {
 		return context.WithValue(parent, ctxFields{}, fields)
 	}
-	return context.WithValue(parent, ctxFields{}, append(val.([]Field), fields...))
+	convertedVal, ok := val.([]Field)
+	if !ok {
+		panic("wrong types in parent context")
+	}
+	return context.WithValue(parent, ctxFields{}, append(convertedVal, fields...))
 }
 
 func (l Logger) WithContext(ctx context.Context) Logger {
@@ -118,7 +122,11 @@ func (l Logger) WithContext(ctx context.Context) Logger {
 	if fields == nil {
 		return l
 	}
-	newl := Logger{l: l.l, fields: append(fields.([]Field), l.fields...)}
+	convertedFields, ok := fields.([]Field)
+	if !ok {
+		panic("wrong types in context")
+	}
+	newl := Logger{l: l.l, fields: append(convertedFields, l.fields...)}
 	return newl
 }
 

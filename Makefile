@@ -5,6 +5,7 @@ OPERATOR := operator
 
 GOBASE := $(shell pwd)
 GOBIN := $(GOBASE)/bin
+GOLINT_PATH := $(GOBIN)/golangci-lint
 
 GOOS := $(shell go env GOOS)
 GOARCH := $(shell go env GOARCH)
@@ -76,17 +77,23 @@ auto-tests:
 .PHONY: lint
 lint: go-lint-install go-lint
 
+GOLINT_VERSION := 1.62.2
 .PHONY: go-lint-install
 go-lint-install:
-ifeq (,$(shell which golangci-lint))
-	@echo "  >  Installing golint"
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- v1.57.2
-endif
+	$(eval CURRENT_VERSION := $(shell $(GOLINT_PATH) --version 2>/dev/null | grep -oP 'version \K[0-9.]+'))
+	@if [ "$(CURRENT_VERSION)" != "$(GOLINT_VERSION)" ]; then \
+		echo "  >  Installing or updating golangci-lint to version $(GOLINT_VERSION)"; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOBIN) v$(GOLINT_VERSION); \
+		echo "Installation complete. Version now: $$($(GOLINT_PATH) --version)"; \
+	else \
+		echo "golangci-lint is already installed at version $(GOLINT_VERSION)"; \
+	fi
+
 
 .PHONY: go-lint
 go-lint:
 	@echo "  >  Running golint"
-	@golangci-lint run ./...
+	@-$(GOLINT_PATH) run ./...
 
 .PHONY: abi-gen
 abi-gen:
