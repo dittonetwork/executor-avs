@@ -84,6 +84,7 @@ func Run(cfg *Config) (*sync.WaitGroup, error) {
 		executor.NewExecutor(
 			conn,
 			entryPoint,
+			// #nosec G115
 			big.NewInt(int64(ignoreEndBlocks)),
 			blockHandlingTimeout,
 			longPollInterval,
